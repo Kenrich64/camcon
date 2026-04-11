@@ -1,0 +1,110 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+html {
+  min-height: 100%;
+  background: #020617;
+}
+
+body {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top right, rgba(34, 211, 238, 0.15), transparent 42%),
+    radial-gradient(circle at bottom left, rgba(59, 130, 246, 0.10), transparent 42%),
+    linear-gradient(135deg, #020617 0%, #0f172a 50%, #1a1f3a 100%);
+  color: #e2e8f0;
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+* {
+  border-color: rgba(148, 163, 184, 0.12);
+}
+
+::selection {
+  background: rgba(34, 211, 238, 0.4);
+  color: #ffffff;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.5);
+}
+
+/* Glass effect utilities */
+@layer components {
+  .glass {
+    @apply bg-slate-800/50 backdrop-blur-xl border border-white/10;
+  }
+
+  .glass-sm {
+    @apply bg-slate-800/40 backdrop-blur-lg border border-white/10;
+  }
+
+  .gradient-border {
+    @apply relative bg-slate-800/50 before:absolute before:inset-0 before:rounded-2xl before:p-[1px] before:bg-gradient-to-r before:from-cyan-400/50 before:to-blue-400/50 before:-z-10;
+  }
+
+  .hover-glow {
+    @apply transition-all duration-300 hover:shadow-lg hover:shadow-cyan-500/20;
+  }
+
+  .btn-primary {
+    @apply px-6 py-3 rounded-xl bg-cyan-500 text-slate-950 font-semibold hover:bg-cyan-400 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-secondary {
+    @apply px-6 py-3 rounded-xl bg-slate-800/70 text-white font-semibold border border-white/20 hover:bg-slate-700 transition-all duration-200;
+  }
+
+  .btn-danger {
+    @apply px-6 py-3 rounded-xl bg-rose-500/20 text-rose-300 font-semibold border border-rose-500/30 hover:bg-rose-500/30 transition-all duration-200;
+  }
+
+  .input-field {
+    @apply w-full rounded-xl border border-white/10 bg-slate-950/50 px-4 py-3 text-white placeholder:text-slate-500 focus:border-cyan-400/60 focus:outline-none focus:ring-2 focus:ring-cyan-400/20 transition-all duration-200;
+  }
+}
+
+/* Animations */
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-slide-in {
+  animation: slide-in 0.3s ease-out;
+}
