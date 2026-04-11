@@ -1,10 +1,11 @@
 const axios = require("axios");
 const pool = require("../db");
 
-const HF_MODEL = "google/flan-t5-base";
+const HF_MODEL = "microsoft/DialoGPT-medium";
 const HF_API_URL = `https://api-inference.huggingface.co/models/${HF_MODEL}`;
 const HF_API_KEY = process.env.HUGGINGFACE_API_KEY;
-const REQUEST_TIMEOUT = 60000;
+const REQUEST_TIMEOUT = 10000;
+const WARMUP_MESSAGE = "AI is warming up, please try again in a moment";
 
 const getHeaders = () => ({
   Authorization: `Bearer ${HF_API_KEY}`,
@@ -67,6 +68,18 @@ const extractGeneratedText = (data) => {
   return "";
 };
 
+const isModelWarmingUp = (err) => {
+  const status = err?.response?.status;
+  const payload = err?.response?.data;
+  const text = typeof payload === "string" ? payload : JSON.stringify(payload || {});
+
+  if (status === 410) {
+    return true;
+  }
+
+  return /loading|currently loading|estimated_time|warming up/i.test(text);
+};
+
 const callHuggingFace = async (prompt) => {
   if (!HF_API_KEY) {
     const error = new Error("Missing Hugging Face API key");
@@ -74,32 +87,31 @@ const callHuggingFace = async (prompt) => {
     throw error;
   }
 
-  const response = await axios.post(
-    HF_API_URL,
-    {
-      inputs: prompt,
-      parameters: {
-        max_new_tokens: 256,
-        temperature: 0.2,
-        return_full_text: false,
+  try {
+    const response = await axios.post(
+      HF_API_URL,
+      {
+        inputs: prompt,
       },
-      options: {
-        wait_for_model: true,
-      },
-    },
-    {
-      timeout: REQUEST_TIMEOUT,
-      headers: getHeaders(),
+      {
+        timeout: REQUEST_TIMEOUT,
+        headers: getHeaders(),
+      }
+    );
+
+    const generatedText = extractGeneratedText(response.data);
+    if (generatedText) {
+      return String(generatedText).trim();
     }
-  );
 
-  const generatedText = extractGeneratedText(response.data);
+    return "AI is currently unavailable.";
+  } catch (err) {
+    if (isModelWarmingUp(err)) {
+      return WARMUP_MESSAGE;
+    }
 
-  if (!generatedText) {
-    throw new Error("Empty model response");
+    throw err;
   }
-
-  return String(generatedText).trim();
 };
 
 const generateInsights = async (req, res) => {
@@ -185,7 +197,7 @@ const chatWithAssistant = async (req, res) => {
     const responseText = await callHuggingFace(prompt);
 
     return res.json({
-      response: responseText,
+      response: responseText || "AI is currently unavailable.",
     });
   } catch (err) {
     console.error("[AI] Chat failed:", err.message);
