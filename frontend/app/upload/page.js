@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import API from "@/lib/api";
 import { GlassCard } from "@/components/ui";
@@ -158,6 +159,12 @@ export default function UploadPage() {
             <div>
               <h1 className="text-2xl font-bold text-white">Upload Events</h1>
               <p className="text-slate-400 text-sm mt-1">CSV/Excel import for events table</p>
+              <Link
+                href="/upload/history"
+                className="mt-2 inline-flex text-xs font-semibold text-cyan-300 transition hover:text-cyan-200"
+              >
+                View upload history
+              </Link>
             </div>
           </div>
 

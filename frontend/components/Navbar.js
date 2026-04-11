@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
-const baseNavItems = [
+const navItems = [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/events", label: "Events" },
+  { href: "/upload", label: "Upload" },
   { href: "/predictions", label: "Predictions" },
 ];
 
@@ -18,14 +19,6 @@ export default function Navbar() {
   useEffect(() => {
     setRole(localStorage.getItem("role") || "user");
   }, [pathname]);
-
-  const navItems = useMemo(() => {
-    const items = [...baseNavItems];
-    if (role === "admin") {
-      items.push({ href: "/upload", label: "Upload" });
-    }
-    return items;
-  }, [role]);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -57,7 +50,7 @@ export default function Navbar() {
 
         <nav className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 p-1 shadow-glow">
           {navItems.map((item) => {
-            const active = pathname === item.href;
+            const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
 
             return (
               <Link

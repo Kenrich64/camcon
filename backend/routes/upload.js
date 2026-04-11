@@ -1,6 +1,6 @@
 const express = require("express");
 const multer = require("multer");
-const { uploadCsv } = require("../controllers/uploadController");
+const { uploadCsv, getUploadHistory } = require("../controllers/uploadController");
 const { verifyToken, adminOnly } = require("../middleware/authMiddleware");
 
 const router = express.Router();
@@ -26,5 +26,6 @@ const upload = multer({
 
 router.post("/csv", verifyToken, adminOnly, upload.single("file"), uploadCsv);
 router.post("/", verifyToken, adminOnly, upload.single("file"), uploadCsv);
+router.get("/history", verifyToken, adminOnly, getUploadHistory);
 
 module.exports = router;

@@ -88,6 +88,18 @@ const findDuplicate = async (client, row) => {
   return duplicateCheck.rows.length > 0;
 };
 
+const ensureUploadLogsTable = async (client) => {
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS upload_logs (
+      id SERIAL PRIMARY KEY,
+      file_name VARCHAR(255) NOT NULL,
+      total_rows INTEGER NOT NULL DEFAULT 0,
+      inserted_rows INTEGER NOT NULL DEFAULT 0,
+      uploaded_at TIMESTAMP DEFAULT NOW()
+    )
+  `);
+};
+
 const uploadCsv = async (req, res, next) => {
   try {
     if (!req.file) {
@@ -126,6 +138,7 @@ const uploadCsv = async (req, res, next) => {
 
     try {
       await client.query("BEGIN");
+      await ensureUploadLogsTable(client);
 
       const today = new Date().toISOString().slice(0, 10);
 
@@ -152,6 +165,12 @@ const uploadCsv = async (req, res, next) => {
         insertedRows += 1;
       }
 
+      await client.query(
+        `INSERT INTO upload_logs (file_name, total_rows, inserted_rows)
+         VALUES ($1, $2, $3)`,
+        [req.file.originalname, rows.length, insertedRows]
+      );
+
       await client.query("COMMIT");
     } catch (dbError) {
       await client.query("ROLLBACK");
@@ -172,4 +191,24 @@ const uploadCsv = async (req, res, next) => {
   }
 };
 
-module.exports = { uploadCsv };
+const getUploadHistory = async (req, res, next) => {
+  const client = await pool.connect();
+
+  try {
+    await ensureUploadLogsTable(client);
+
+    const result = await client.query(
+      `SELECT id, file_name, total_rows, inserted_rows, uploaded_at
+       FROM upload_logs
+       ORDER BY uploaded_at DESC`
+    );
+
+    return res.json({ logs: result.rows });
+  } catch (error) {
+    return next(error);
+  } finally {
+    client.release();
+  }
+};
+
+module.exports = { uploadCsv, getUploadHistory };

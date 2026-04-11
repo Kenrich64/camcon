@@ -1,7 +1,7 @@
 const axios = require("axios");
 const pool = require("../db");
 
-const HF_MODEL = "microsoft/DialoGPT-medium";
+const HF_MODEL = "google/flan-t5-base";
 const HF_API_URL = `https://api-inference.huggingface.co/models/${HF_MODEL}`;
 const HF_API_KEY = process.env.HUGGINGFACE_API_KEY;
 const REQUEST_TIMEOUT = 10000;
@@ -35,6 +35,7 @@ const buildInsightsPrompt = (data) => {
   return [
     "Act as a campus analytics expert.",
     "Analyze the data below and return concise, practical findings.",
+    "Focus strongly on events volume, participation statistics, and feedback averages.",
     "Include the following sections in plain text: insights, problems, suggestions.",
     "Use short bullet points.",
     "Data:",
@@ -114,6 +115,38 @@ const callHuggingFace = async (prompt) => {
   }
 };
 
+const fetchInsightsContext = async () => {
+  const [eventsResult, participationResult, feedbackResult] = await Promise.all([
+    pool.query(`SELECT COUNT(*)::int AS total_events FROM events`),
+    pool.query(`
+      SELECT
+        COALESCE(SUM(attended), 0)::int AS total_attended,
+        COUNT(*)::int AS participation_records
+      FROM participation
+    `),
+    pool.query(`
+      SELECT
+        COALESCE(ROUND(AVG(score)::numeric, 2), 0) AS average_feedback_score,
+        COALESCE(ROUND(AVG(rating)::numeric, 2), 0) AS average_rating
+      FROM feedback
+    `),
+  ]);
+
+  return {
+    events: {
+      totalEvents: eventsResult.rows[0]?.total_events || 0,
+    },
+    participation: {
+      totalAttended: participationResult.rows[0]?.total_attended || 0,
+      records: participationResult.rows[0]?.participation_records || 0,
+    },
+    feedback: {
+      averageFeedbackScore: Number(feedbackResult.rows[0]?.average_feedback_score || 0),
+      averageRating: Number(feedbackResult.rows[0]?.average_rating || 0),
+    },
+  };
+};
+
 const generateInsights = async (req, res) => {
   const payload = normalizeBody(req.body);
 
@@ -124,7 +157,11 @@ const generateInsights = async (req, res) => {
   try {
     console.info("[AI] Generating insights with Hugging Face model:", HF_MODEL);
 
-    const prompt = buildInsightsPrompt(payload);
+    const statsContext = await fetchInsightsContext();
+    const prompt = buildInsightsPrompt({
+      inputData: payload,
+      statsContext,
+    });
     const insightText = await callHuggingFace(prompt);
 
     return res.json({
