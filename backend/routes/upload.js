@@ -7,20 +7,24 @@ const router = express.Router();
 
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 2 * 1024 * 1024 },
+  limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
-    const isCsv =
-      file.mimetype === "text/csv" ||
-      file.originalname.toLowerCase().endsWith(".csv");
+    const fileName = file.originalname.toLowerCase();
+    const isCsv = file.mimetype === "text/csv" || fileName.endsWith(".csv");
+    const isXlsx =
+      file.mimetype ===
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
+      fileName.endsWith(".xlsx");
 
-    if (!isCsv) {
-      return cb(new Error("Only CSV files are allowed"));
+    if (!isCsv && !isXlsx) {
+      return cb(new Error("Only .csv and .xlsx files are allowed"));
     }
 
     return cb(null, true);
   },
 });
 
+router.post("/csv", verifyToken, adminOnly, upload.single("file"), uploadCsv);
 router.post("/", verifyToken, adminOnly, upload.single("file"), uploadCsv);
 
 module.exports = router;
