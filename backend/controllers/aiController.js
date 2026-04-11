@@ -1,101 +1,126 @@
 const axios = require("axios");
 const pool = require("../db");
 
-const OLLAMA_URL = process.env.OLLAMA_URL || "http://localhost:11434/api/generate";
-const OLLAMA_MODEL = process.env.OLLAMA_MODEL || "gemma:2b";
+const HF_MODEL = "google/flan-t5-base";
+const HF_API_URL = `https://api-inference.huggingface.co/models/${HF_MODEL}`;
+const HF_API_KEY = process.env.HUGGINGFACE_API_KEY;
+const REQUEST_TIMEOUT = 60000;
 
-const buildPrompt = (payload) => {
-  const prettyPayload = JSON.stringify(payload, null, 2);
+const getHeaders = () => ({
+  Authorization: `Bearer ${HF_API_KEY}`,
+  "Content-Type": "application/json",
+  Accept: "application/json",
+});
+
+const normalizeBody = (body) => {
+  if (body && typeof body === "object" && body.data && typeof body.data === "object") {
+    return body.data;
+  }
+
+  return body || {};
+};
+
+const stringifyContext = (value) => {
+  try {
+    return JSON.stringify(value, null, 2);
+  } catch (err) {
+    return String(value);
+  }
+};
+
+const buildInsightsPrompt = (data) => {
+  const contextText = stringifyContext(data);
 
   return [
-    "You are a campus analytics expert.",
-    "Analyze the following campus event analytics data and return practical insight.",
-    "Respond ONLY as valid JSON with exactly these keys:",
-    "insights (array of strings), weaknesses (array of strings), recommendations (array of strings)",
-    "Keep each item concise and actionable.",
+    "Act as a campus analytics expert.",
+    "Analyze the data below and return concise, practical findings.",
+    "Include the following sections in plain text: insights, problems, suggestions.",
+    "Use short bullet points.",
     "Data:",
-    prettyPayload,
+    contextText,
   ].join("\n");
 };
 
-const normalizeToText = (rawText) => {
-  if (!rawText || typeof rawText !== "string") {
-    return "No AI insight generated.";
-  }
-
-  try {
-    const parsed = JSON.parse(rawText);
-    const insights = Array.isArray(parsed.insights) ? parsed.insights : [];
-    const weaknesses = Array.isArray(parsed.weaknesses) ? parsed.weaknesses : [];
-    const recommendations = Array.isArray(parsed.recommendations) ? parsed.recommendations : [];
-
-    const section = (title, items) => {
-      if (!items.length) {
-        return `${title}:\n- Not provided`;
-      }
-
-      return `${title}:\n${items.map((item) => `- ${item}`).join("\n")}`;
-    };
-
-    return [
-      section("Insights", insights),
-      section("Weaknesses", weaknesses),
-      section("Recommendations", recommendations),
-    ].join("\n\n");
-  } catch (parseErr) {
-    return rawText.trim();
-  }
+const buildChatPrompt = ({ question, dbContext, frontendContext }) => {
+  return [
+    "You are Camcon AI Assistant, an expert campus analytics and event operations advisor.",
+    "Answer the user's question using the provided context.",
+    "Be concise, practical, and specific.",
+    "If information is missing, say so briefly and suggest what to check.",
+    "Question:",
+    question,
+    "Context:",
+    stringifyContext({ frontendContext, backendContext: dbContext }),
+  ].join("\n");
 };
 
-const generateInsights = async (req, res, next) => {
-  const analytics = req.body;
+const extractGeneratedText = (data) => {
+  if (Array.isArray(data)) {
+    const firstItem = data[0] || {};
+    return firstItem.generated_text || firstItem.summary_text || firstItem.answer || firstItem.text || "";
+  }
 
-  if (!analytics || typeof analytics !== "object") {
+  if (data && typeof data === "object") {
+    return data.generated_text || data.summary_text || data.answer || data.text || data.response || "";
+  }
+
+  return "";
+};
+
+const callHuggingFace = async (prompt) => {
+  if (!HF_API_KEY) {
+    const error = new Error("Missing Hugging Face API key");
+    error.statusCode = 500;
+    throw error;
+  }
+
+  const response = await axios.post(
+    HF_API_URL,
+    {
+      inputs: prompt,
+      parameters: {
+        max_new_tokens: 256,
+        temperature: 0.2,
+        return_full_text: false,
+      },
+      options: {
+        wait_for_model: true,
+      },
+    },
+    {
+      timeout: REQUEST_TIMEOUT,
+      headers: getHeaders(),
+    }
+  );
+
+  const generatedText = extractGeneratedText(response.data);
+
+  if (!generatedText) {
+    throw new Error("Empty model response");
+  }
+
+  return String(generatedText).trim();
+};
+
+const generateInsights = async (req, res) => {
+  const payload = normalizeBody(req.body);
+
+  if (!payload || typeof payload !== "object" || Array.isArray(payload) || Object.keys(payload).length === 0) {
     return res.status(400).json({ error: "Analytics payload is required" });
   }
 
   try {
-    console.info("[AI] Generating insights with model:", OLLAMA_MODEL);
+    console.info("[AI] Generating insights with Hugging Face model:", HF_MODEL);
 
-    const prompt = buildPrompt(analytics);
-
-    const ollamaResponse = await axios.post(
-      OLLAMA_URL,
-      {
-        model: OLLAMA_MODEL,
-        prompt,
-        stream: false,
-      },
-      {
-        timeout: 60000,
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
-    );
-
-    const rawModelResponse = ollamaResponse?.data?.response || "";
-    const insightText = normalizeToText(rawModelResponse);
+    const prompt = buildInsightsPrompt(payload);
+    const insightText = await callHuggingFace(prompt);
 
     return res.json({
       insight: insightText,
     });
   } catch (err) {
-    console.error("[AI] Insight generation failed:", err.message);
-
-    if (err.code === "ECONNREFUSED") {
-      return res.status(503).json({
-        error: "Ollama service is unavailable. Ensure Ollama is running on localhost:11434.",
-      });
-    }
-
-    if (err.code === "ECONNABORTED") {
-      return res.status(504).json({
-        error: "AI insight request timed out.",
-      });
-    }
-
-    return next(err);
+    console.error("[AI] Insights generation failed:", err.message);
+    return res.status(500).json({ error: "AI failed" });
   }
 };
 
@@ -139,83 +164,32 @@ const fetchChatContext = async () => {
   };
 };
 
-const buildChatPrompt = ({ question, contextData, dbContext }) => {
-  const contextText = JSON.stringify(
-    {
-      frontendContext: contextData || null,
-      backendContext: dbContext,
-    },
-    null,
-    2
-  );
-
-  return [
-    "You are Camcon AI Assistant, an expert campus analytics and event operations advisor.",
-    "Answer the user question using the provided context data.",
-    "Be concise, practical, and specific to this campus dataset.",
-    "If data is missing, state assumptions clearly.",
-    "Use short paragraphs and bullet points when useful.",
-    "User question:",
-    question,
-    "Context data:",
-    contextText,
-  ].join("\n");
-};
-
-const chatWithAssistant = async (req, res, next) => {
+const chatWithAssistant = async (req, res) => {
   const question = req.body?.question;
-  const contextData = req.body?.context;
+  const frontendContext = req.body?.context;
 
   if (!question || typeof question !== "string" || !question.trim()) {
     return res.status(400).json({ error: "question is required" });
   }
 
   try {
+    console.info("[AI] Chat request received");
+
     const dbContext = await fetchChatContext();
     const prompt = buildChatPrompt({
       question: question.trim(),
-      contextData,
+      frontendContext,
       dbContext,
     });
 
-    console.info("[AI] Chat request received");
-
-    const ollamaResponse = await axios.post(
-      OLLAMA_URL,
-      {
-        model: OLLAMA_MODEL,
-        prompt,
-        stream: false,
-      },
-      {
-        timeout: 60000,
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
-    );
-
-    const responseText = (ollamaResponse?.data?.response || "").trim();
+    const responseText = await callHuggingFace(prompt);
 
     return res.json({
-      response: responseText || "I could not generate a response right now.",
+      response: responseText,
     });
   } catch (err) {
     console.error("[AI] Chat failed:", err.message);
-
-    if (err.code === "ECONNREFUSED") {
-      return res.status(503).json({
-        error: "Ollama service is unavailable. Ensure Ollama is running on localhost:11434.",
-      });
-    }
-
-    if (err.code === "ECONNABORTED") {
-      return res.status(504).json({
-        error: "AI chat request timed out.",
-      });
-    }
-
-    return next(err);
+    return res.status(500).json({ error: "AI failed" });
   }
 };
 
