@@ -1,17 +1,25 @@
-const axios = require("axios");
+const GroqSdk = require("groq-sdk");
 const pool = require("../db");
 
-const HF_MODEL = "google/flan-t5-base";
-const HF_API_URL = `https://api-inference.huggingface.co/models/${HF_MODEL}`;
-const HF_API_KEY = process.env.HUGGINGFACE_API_KEY;
-const REQUEST_TIMEOUT = 10000;
-const WARMUP_MESSAGE = "AI is warming up, please try again in a moment";
+const Groq = GroqSdk.default || GroqSdk;
+let groqClient = null;
 
-const getHeaders = () => ({
-  Authorization: `Bearer ${HF_API_KEY}`,
-  "Content-Type": "application/json",
-  Accept: "application/json",
-});
+const getGroqClient = () => {
+  if (!process.env.GROQ_API_KEY) {
+    return null;
+  }
+
+  if (!groqClient) {
+    groqClient = new Groq({
+      apiKey: process.env.GROQ_API_KEY,
+    });
+  }
+
+  return groqClient;
+};
+
+const GROQ_MODEL = "llama3-8b-8192";
+const FALLBACK_MESSAGE = "AI service temporarily unavailable";
 
 const normalizeBody = (body) => {
   if (body && typeof body === "object" && body.data && typeof body.data === "object") {
@@ -29,89 +37,55 @@ const stringifyContext = (value) => {
   }
 };
 
-const buildInsightsPrompt = (data) => {
-  const contextText = stringifyContext(data);
+const buildInsightsPrompt = ({ payload, statsContext }) => {
+  const contextText = stringifyContext(payload);
+  const statsText = stringifyContext(statsContext);
 
   return [
     "Act as a campus analytics expert.",
     "Analyze the data below and return concise, practical findings.",
-    "Focus strongly on events volume, participation statistics, and feedback averages.",
+    "Focus strongly on event volume, participation statistics, and feedback averages.",
+    "Use the database context to make the response more specific and grounded.",
     "Include the following sections in plain text: insights, problems, suggestions.",
     "Use short bullet points.",
-    "Data:",
+    "Payload:",
     contextText,
+    "Database context:",
+    statsText,
   ].join("\n");
 };
 
-const buildChatPrompt = ({ question, dbContext, frontendContext }) => {
+const buildChatSystemPrompt = ({ dbContext, frontendContext }) => {
   return [
     "You are Camcon AI Assistant, an expert campus analytics and event operations advisor.",
-    "Answer the user's question using the provided context.",
+    "Answer the user's question using the provided context about events, participation, and feedback.",
     "Be concise, practical, and specific.",
     "If information is missing, say so briefly and suggest what to check.",
-    "Question:",
-    question,
-    "Context:",
-    stringifyContext({ frontendContext, backendContext: dbContext }),
+    "Backend context:",
+    stringifyContext(dbContext),
+    "Frontend context:",
+    stringifyContext(frontendContext || {}),
   ].join("\n");
 };
 
-const extractGeneratedText = (data) => {
-  if (Array.isArray(data)) {
-    const firstItem = data[0] || {};
-    return firstItem.generated_text || firstItem.summary_text || firstItem.answer || firstItem.text || "";
-  }
+const createGroqCompletion = async (messages, fallbackMessage = FALLBACK_MESSAGE) => {
+  const groq = getGroqClient();
 
-  if (data && typeof data === "object") {
-    return data.generated_text || data.summary_text || data.answer || data.text || data.response || "";
-  }
-
-  return "";
-};
-
-const isModelWarmingUp = (err) => {
-  const status = err?.response?.status;
-  const payload = err?.response?.data;
-  const text = typeof payload === "string" ? payload : JSON.stringify(payload || {});
-
-  if (status === 410) {
-    return true;
-  }
-
-  return /loading|currently loading|estimated_time|warming up/i.test(text);
-};
-
-const callHuggingFace = async (prompt) => {
-  if (!HF_API_KEY) {
-    const error = new Error("Missing Hugging Face API key");
-    error.statusCode = 500;
-    throw error;
+  if (!groq) {
+    return fallbackMessage;
   }
 
   try {
-    const response = await axios.post(
-      HF_API_URL,
-      {
-        inputs: prompt,
-      },
-      {
-        timeout: REQUEST_TIMEOUT,
-        headers: getHeaders(),
-      }
-    );
+    const response = await groq.chat.completions.create({
+      model: GROQ_MODEL,
+      messages,
+      temperature: 0.3,
+    });
 
-    const generatedText = extractGeneratedText(response.data);
-    if (generatedText) {
-      return String(generatedText).trim();
-    }
-
-    return "AI is currently unavailable.";
-  } catch (err) {
-    if (isModelWarmingUp(err)) {
-      return WARMUP_MESSAGE;
-    }
-
-    throw err;
+    return response.choices?.[0]?.message?.content?.trim() || fallbackMessage;
+  } catch (error) {
+    console.error("[AI] Groq request failed:", error.message);
+    return fallbackMessage;
   }
 };
 
@@ -155,21 +129,32 @@ const generateInsights = async (req, res) => {
   }
 
   try {
-    console.info("[AI] Generating insights with Hugging Face model:", HF_MODEL);
+    console.info("[AI] Generating insights with Groq model:", GROQ_MODEL);
 
     const statsContext = await fetchInsightsContext();
-    const prompt = buildInsightsPrompt({
-      inputData: payload,
-      statsContext,
-    });
-    const insightText = await callHuggingFace(prompt);
+    const insightText = await createGroqCompletion(
+      [
+        {
+          role: "system",
+          content: buildInsightsPrompt({
+            payload,
+            statsContext,
+          }),
+        },
+        {
+          role: "user",
+          content: "Analyze this dashboard data and produce the requested output.",
+        },
+      ],
+      FALLBACK_MESSAGE
+    );
 
     return res.json({
       insight: insightText,
     });
   } catch (err) {
     console.error("[AI] Insights generation failed:", err.message);
-    return res.status(500).json({ error: "AI failed" });
+    return res.json({ insight: FALLBACK_MESSAGE });
   }
 };
 
@@ -214,7 +199,7 @@ const fetchChatContext = async () => {
 };
 
 const chatWithAssistant = async (req, res) => {
-  const question = req.body?.question;
+  const { question } = req.body || {};
   const frontendContext = req.body?.context;
 
   if (!question || typeof question !== "string" || !question.trim()) {
@@ -222,23 +207,29 @@ const chatWithAssistant = async (req, res) => {
   }
 
   try {
-    console.info("[AI] Chat request received");
+    console.info("[AI] Chat request received with Groq model:", GROQ_MODEL);
 
     const dbContext = await fetchChatContext();
-    const prompt = buildChatPrompt({
-      question: question.trim(),
-      frontendContext,
-      dbContext,
-    });
-
-    const responseText = await callHuggingFace(prompt);
+    const responseText = await createGroqCompletion([
+      {
+        role: "system",
+        content: buildChatSystemPrompt({
+          dbContext,
+          frontendContext,
+        }),
+      },
+      {
+        role: "user",
+        content: question.trim(),
+      },
+    ]);
 
     return res.json({
-      response: responseText || "AI is currently unavailable.",
+      response: responseText,
     });
   } catch (err) {
     console.error("[AI] Chat failed:", err.message);
-    return res.status(500).json({ error: "AI failed" });
+    return res.json({ response: FALLBACK_MESSAGE });
   }
 };
 
