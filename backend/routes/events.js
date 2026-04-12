@@ -16,7 +16,7 @@ router.get("/:id", getEventById);
 
 // Protected routes (require authentication)
 router.post("/", verifyToken, adminOnly, createEvent);
-router.put("/:id", verifyToken, updateEvent);
+router.put("/:id", verifyToken, adminOnly, updateEvent);
 router.delete("/:id", verifyToken, adminOnly, deleteEvent);
 
 module.exports = router;

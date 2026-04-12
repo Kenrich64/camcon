@@ -63,7 +63,7 @@ const createEvent = async (req, res, next) => {
 // Update event
 const updateEvent = async (req, res, next) => {
   const { id } = req.params;
-  const { title, department, date, venue, total_students, status } = req.body;
+  const { department, date, venue, status } = req.body;
 
   try {
     // Get the old event first to determine update type
@@ -78,21 +78,33 @@ const updateEvent = async (req, res, next) => {
 
     const oldEvent = oldEventResult.rows[0];
 
+    const nextDepartment = department ?? oldEvent.department;
+    const nextDate = date ?? oldEvent.date;
+    const nextVenue = venue ?? oldEvent.venue;
+    const nextStatus = status ?? oldEvent.status;
+
+    const allowedStatuses = ["scheduled", "cancelled", "postponed", "ongoing", "completed"];
+    if (!allowedStatuses.includes(String(nextStatus))) {
+      return res.status(400).json({ error: "Invalid status value" });
+    }
+
     const result = await pool.query(
-      "UPDATE events SET title=$1, department=$2, date=$3, venue=$4, total_students=$5, status=$6 WHERE id=$7 RETURNING *",
-      [title, department, date, venue, total_students, status, id]
+      "UPDATE events SET department=$1, date=$2, venue=$3, status=$4 WHERE id=$5 RETURNING *",
+      [nextDepartment, nextDate, nextVenue, nextStatus, id]
     );
 
     const updatedEvent = result.rows[0];
 
     // Determine update type based on what changed
     let updateType = "updated";
-    if (oldEvent.date !== date && status !== "cancelled") {
-      updateType = "postponed";
-    } else if (oldEvent.venue !== venue) {
-      updateType = "venue_changed";
-    } else if (oldEvent.status === "scheduled" && status === "cancelled") {
+    if (nextStatus === "cancelled" && oldEvent.status !== "cancelled") {
       updateType = "cancelled";
+    } else if (nextStatus === "postponed" || oldEvent.date !== nextDate) {
+      updateType = "postponed";
+    } else if (oldEvent.venue !== nextVenue) {
+      updateType = "venue_changed";
+    } else if (oldEvent.status !== nextStatus) {
+      updateType = "updated";
     }
 
     // Emit socket notification

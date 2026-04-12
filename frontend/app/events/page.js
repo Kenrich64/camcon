@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import API from "@/lib/api";
 import { GlassCard, EmptyState, CardSkeleton } from "@/components/ui";
-import { Plus, Trash2, Calendar, MapPin, Users } from "lucide-react";
+import { Plus, Trash2, Calendar, MapPin, Users, Pencil } from "lucide-react";
 import toast from "react-hot-toast";
 
 const initialForm = {
@@ -20,7 +20,15 @@ const STATUS_COLORS = {
   scheduled: "bg-blue-500/20 text-blue-300 border-blue-500/30",
   ongoing: "bg-purple-500/20 text-purple-300 border-purple-500/30",
   completed: "bg-green-500/20 text-green-300 border-green-500/30",
+  postponed: "bg-amber-500/20 text-amber-300 border-amber-500/30",
   cancelled: "bg-rose-500/20 text-rose-300 border-rose-500/30",
+};
+
+const initialEditForm = {
+  department: "",
+  date: "",
+  venue: "",
+  status: "scheduled",
 };
 
 export default function EventsPage() {
@@ -30,6 +38,9 @@ export default function EventsPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingEventId, setEditingEventId] = useState(null);
+  const [editForm, setEditForm] = useState(initialEditForm);
   const [error, setError] = useState("");
   const [form, setForm] = useState(initialForm);
 
@@ -118,6 +129,69 @@ export default function EventsPage() {
     }
   };
 
+  const openEditModal = (eventItem) => {
+    const formattedDate = eventItem?.date
+      ? new Date(eventItem.date).toISOString().slice(0, 10)
+      : "";
+
+    setEditingEventId(eventItem.id);
+    setEditForm({
+      department: eventItem.department || "",
+      date: formattedDate,
+      venue: eventItem.venue || "",
+      status: eventItem.status || "scheduled",
+    });
+    setShowEditModal(true);
+  };
+
+  const handleEditChange = (event) => {
+    const { name, value } = event.target;
+    setEditForm((current) => ({ ...current, [name]: value }));
+  };
+
+  const closeEditModal = () => {
+    setShowEditModal(false);
+    setEditingEventId(null);
+    setEditForm(initialEditForm);
+  };
+
+  const handleEditSubmit = async (event) => {
+    event.preventDefault();
+
+    if (role !== "admin") {
+      toast.error("Admin only feature");
+      return;
+    }
+
+    if (!editingEventId) {
+      toast.error("No event selected for editing");
+      return;
+    }
+
+    setSubmitting(true);
+
+    try {
+      await API.put(`/events/${editingEventId}`, {
+        department: editForm.department,
+        date: editForm.date,
+        venue: editForm.venue,
+        status: editForm.status,
+      });
+
+      toast.success("Event updated successfully!");
+      closeEditModal();
+      await loadEvents();
+    } catch (apiError) {
+      const errorMsg =
+        apiError?.response?.data?.message ||
+        apiError?.response?.data?.error ||
+        "Failed to update event";
+      toast.error(errorMsg);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
       <main className="px-4 py-8 sm:px-6 lg:px-8 max-w-7xl mx-auto">
@@ -195,6 +269,60 @@ export default function EventsPage() {
           </GlassCard>
         )}
 
+        {showEditModal && role === "admin" && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 px-4">
+            <GlassCard className="w-full max-w-lg p-6" hoverable={false}>
+              <h2 className="text-xl font-bold text-white mb-5">Edit Event</h2>
+              <form onSubmit={handleEditSubmit} className="space-y-4">
+                <Field
+                  label="Department"
+                  name="department"
+                  value={editForm.department}
+                  onChange={handleEditChange}
+                  required
+                />
+                <Field
+                  label="Date"
+                  name="date"
+                  type="date"
+                  value={editForm.date}
+                  onChange={handleEditChange}
+                  required
+                />
+                <Field
+                  label="Venue"
+                  name="venue"
+                  value={editForm.venue}
+                  onChange={handleEditChange}
+                  required
+                />
+                <label className="block">
+                  <span className="mb-2 block text-sm font-medium text-slate-300">Status</span>
+                  <select
+                    name="status"
+                    value={editForm.status}
+                    onChange={handleEditChange}
+                    className="input-field"
+                  >
+                    <option value="scheduled">Scheduled</option>
+                    <option value="cancelled">Cancelled</option>
+                    <option value="postponed">Postponed</option>
+                  </select>
+                </label>
+
+                <div className="flex items-center gap-3 pt-2">
+                  <button type="submit" disabled={submitting} className="btn-primary">
+                    {submitting ? "Saving..." : "Save Changes"}
+                  </button>
+                  <button type="button" onClick={closeEditModal} className="btn-secondary">
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </GlassCard>
+          </div>
+        )}
+
         <section>
           {loading ? (
             <div className="space-y-4">
@@ -256,12 +384,20 @@ export default function EventsPage() {
                   </div>
 
                   {role === "admin" && (
-                    <button
-                      onClick={() => handleDelete(event.id)}
-                      className="w-full btn-danger flex items-center justify-center gap-2 mt-4"
-                    >
-                      <Trash2 size={16} /> Delete
-                    </button>
+                    <div className="mt-4 grid grid-cols-2 gap-3">
+                      <button
+                        onClick={() => openEditModal(event)}
+                        className="w-full rounded bg-blue-500 px-3 py-2 text-sm font-semibold text-white transition hover:bg-blue-600 flex items-center justify-center gap-2"
+                      >
+                        <Pencil size={14} /> Edit
+                      </button>
+                      <button
+                        onClick={() => handleDelete(event.id)}
+                        className="w-full btn-danger flex items-center justify-center gap-2"
+                      >
+                        <Trash2 size={16} /> Delete
+                      </button>
+                    </div>
                   )}
                 </GlassCard>
               ))}
