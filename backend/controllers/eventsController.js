@@ -44,6 +44,11 @@ const createEvent = async (req, res, next) => {
     const io = req.app.get("io");
     if (io) {
       io.emit("new_event", createdEvent);
+      io.emit("event_update", {
+        type: "created",
+        event: createdEvent,
+        message: `Event Update: ${createdEvent.title} has been created`,
+      });
     }
 
     res.status(201).json({

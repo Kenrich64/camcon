@@ -30,7 +30,11 @@ export default function AppLayout({ children }) {
       return undefined;
     }
 
-    const baseUrl = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000").replace(/\/$/, "");
+    const baseUrl = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "");
+    if (!baseUrl) {
+      return undefined;
+    }
+
     const socket = io(baseUrl, {
       transports: ["websocket"],
     });

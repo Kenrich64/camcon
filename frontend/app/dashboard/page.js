@@ -30,11 +30,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [overview, setOverview] = useState({
-    totalEvents: 0,
-    totalParticipation: 0,
-    averageFeedbackScore: 0,
-  });
+  const [overview, setOverview] = useState(null);
   const [trend, setTrend] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [feedbackStats, setFeedbackStats] = useState([]);
@@ -300,6 +296,10 @@ export default function DashboardPage() {
       setExportLoading(false);
     }
   };
+
+  if (!overview) {
+    return <p className="px-6 py-8 text-slate-300">Loading dashboard...</p>;
+  }
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">

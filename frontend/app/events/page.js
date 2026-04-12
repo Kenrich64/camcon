@@ -130,7 +130,7 @@ export default function EventsPage() {
           {role === "admin" && (
             <button
               onClick={() => setShowForm(true)}
-              className="btn-primary inline-flex items-center gap-2"
+              className="inline-flex items-center gap-2 rounded bg-blue-500 px-4 py-2 font-semibold text-white transition hover:bg-blue-600"
             >
               <Plus size={20} /> Add Event
             </button>

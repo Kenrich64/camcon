@@ -1,36 +1,7 @@
 import axios from "axios";
 
-// Determine API base URL based on environment
-const getAPIBaseURL = () => {
-  // Use environment variable if available
-  if (process.env.NEXT_PUBLIC_API_URL) {
-    const url = process.env.NEXT_PUBLIC_API_URL.replace(/\/$/, "");
-    console.log("[API] Using configured API URL:", url);
-    return url;
-  }
-
-  // Fallback to localhost for development
-  if (typeof window !== "undefined" && !process.env.NODE_ENV || process.env.NODE_ENV === "development") {
-    console.log("[API] Using localhost fallback (development)");
-    return "http://localhost:5000";
-  }
-
-  // For production without env var, extract from window.location
-  if (typeof window !== "undefined") {
-    const protocol = window.location.protocol;
-    const hostname = window.location.hostname;
-    const apiUrl = `${protocol}//${hostname}:5000`;
-    console.log("[API] Using derived API URL:", apiUrl);
-    return apiUrl;
-  }
-
-  return "http://localhost:5000";
-};
-
-const API_BASE_URL = getAPIBaseURL();
-
 const API = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: process.env.NEXT_PUBLIC_API_URL,
   timeout: 10000,
 });
 

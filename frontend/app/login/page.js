@@ -30,8 +30,9 @@ export default function LoginPage() {
 
     try {
       const response = await API.post("/auth/login", form);
+      const user = response.data?.user || {};
       localStorage.setItem("token", response.data.token);
-      localStorage.setItem("role", response.data?.user?.role || "user");
+      localStorage.setItem("role", user.role || "user");
       router.push("/dashboard");
     } catch (apiError) {
       setError(apiError?.response?.data?.error || "Login failed");
