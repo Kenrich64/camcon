@@ -11,10 +11,11 @@ export default function AppLayout({ children }) {
   const router = useRouter();
   const pathname = usePathname();
   const [isReady, setIsReady] = useState(false);
+  const publicRoutes = ["/login", "/register"];
 
   // Redirect to login if not authenticated (except on login/signup pages)
   useEffect(() => {
-    const isAuthPage = pathname === "/login";
+    const isAuthPage = publicRoutes.includes(pathname);
     const token = localStorage.getItem("token");
 
     if (!token && !isAuthPage) {
@@ -26,7 +27,7 @@ export default function AppLayout({ children }) {
   }, [router, pathname]);
 
   useEffect(() => {
-    if (pathname === "/login") {
+    if (publicRoutes.includes(pathname)) {
       return undefined;
     }
 
@@ -103,7 +104,7 @@ export default function AppLayout({ children }) {
   }, [pathname]);
 
   // Don't render sidebar/header on login page
-  const isAuthPage = pathname === "/login";
+  const isAuthPage = publicRoutes.includes(pathname);
 
   if (!isReady && !isAuthPage) {
     return (
