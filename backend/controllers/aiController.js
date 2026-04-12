@@ -4,15 +4,27 @@ const pool = require("../db");
 const Groq = GroqSdk.default || GroqSdk;
 let groqClient = null;
 
+// Debug logging for Groq initialization
+console.log("[AI INIT] GROQ_API_KEY:", process.env.GROQ_API_KEY ? "EXISTS ✅" : "MISSING ⚠️");
+console.log("[AI INIT] Groq SDK loaded:", typeof Groq !== "undefined" ? "✅" : "❌");
+
 const getGroqClient = () => {
   if (!process.env.GROQ_API_KEY) {
+    console.warn("[AI] No GROQ_API_KEY found in environment");
     return null;
   }
 
   if (!groqClient) {
-    groqClient = new Groq({
-      apiKey: process.env.GROQ_API_KEY,
-    });
+    try {
+      groqClient = new Groq({
+        apiKey: process.env.GROQ_API_KEY,
+      });
+      console.log("[AI] Groq client initialized successfully ✅");
+    } catch (error) {
+      console.error("[AI] Failed to initialize Groq client:", error.message);
+      groqClient = null;
+      return null;
+    }
   }
 
   return groqClient;
@@ -72,19 +84,34 @@ const createGroqCompletion = async (messages, fallbackMessage = FALLBACK_MESSAGE
   const groq = getGroqClient();
 
   if (!groq) {
+    console.warn("[AI] Groq client unavailable, using fallback message");
     return fallbackMessage;
   }
 
   try {
+    console.log(`[AI] Requesting ${GROQ_MODEL} with ${messages.length} messages`);
+    
     const response = await groq.chat.completions.create({
       model: GROQ_MODEL,
       messages,
       temperature: 0.3,
+      max_tokens: 1024,
     });
 
-    return response.choices?.[0]?.message?.content?.trim() || fallbackMessage;
+    const content = response.choices?.[0]?.message?.content?.trim();
+    if (!content) {
+      console.warn("[AI] Empty response from Groq");
+      return fallbackMessage;
+    }
+
+    console.log("[AI] Groq response successful ✅");
+    return content;
   } catch (error) {
-    console.error("[AI] Groq request failed:", error.message);
+    console.error("[AI] Groq request failed:", {
+      message: error.message,
+      code: error.code,
+      status: error.status,
+    });
     return fallbackMessage;
   }
 };
@@ -129,9 +156,15 @@ const generateInsights = async (req, res) => {
   }
 
   try {
-    console.info("[AI] Generating insights with Groq model:", GROQ_MODEL);
+    console.log("[AI] Generating insights with Groq model:", GROQ_MODEL);
 
     const statsContext = await fetchInsightsContext();
+    console.log("[AI] Fetched stats context:", {
+      events: statsContext.events?.totalEvents,
+      participation: statsContext.participation?.totalAttended,
+      feedback: statsContext.feedback?.averageFeedbackScore,
+    });
+
     const insightText = await createGroqCompletion(
       [
         {
@@ -149,12 +182,17 @@ const generateInsights = async (req, res) => {
       FALLBACK_MESSAGE
     );
 
+    console.log("[AI] Insights generated successfully ✅");
+
     return res.json({
       insight: insightText,
     });
   } catch (err) {
     console.error("[AI] Insights generation failed:", err.message);
-    return res.json({ insight: FALLBACK_MESSAGE });
+    return res.json({
+      insight: FALLBACK_MESSAGE,
+      error: "AI service unavailable, using fallback insights",
+    });
   }
 };
 
@@ -207,9 +245,12 @@ const chatWithAssistant = async (req, res) => {
   }
 
   try {
-    console.info("[AI] Chat request received with Groq model:", GROQ_MODEL);
+    console.log("[AI] Chat request received with Groq model:", GROQ_MODEL);
+    console.log("[AI] Question:", question.substring(0, 100));
 
     const dbContext = await fetchChatContext();
+    console.log("[AI] Fetched chat context ✅");
+
     const responseText = await createGroqCompletion([
       {
         role: "system",
@@ -224,12 +265,17 @@ const chatWithAssistant = async (req, res) => {
       },
     ]);
 
+    console.log("[AI] Chat response generated successfully ✅");
+
     return res.json({
       response: responseText,
     });
   } catch (err) {
     console.error("[AI] Chat failed:", err.message);
-    return res.json({ response: FALLBACK_MESSAGE });
+    return res.json({
+      response: FALLBACK_MESSAGE,
+      error: "Chat service temporarily unavailable",
+    });
   }
 };
 
