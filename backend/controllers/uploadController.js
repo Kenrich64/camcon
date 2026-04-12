@@ -100,6 +100,13 @@ const ensureUploadLogsTable = async (client) => {
   `);
 };
 
+const ensureEventsAttendanceColumn = async (client) => {
+  await client.query(`
+    ALTER TABLE events
+    ADD COLUMN IF NOT EXISTS attended_students INTEGER NOT NULL DEFAULT 0
+  `);
+};
+
 const uploadCsv = async (req, res, next) => {
   try {
     if (!req.file) {
@@ -139,6 +146,7 @@ const uploadCsv = async (req, res, next) => {
     try {
       await client.query("BEGIN");
       await ensureUploadLogsTable(client);
+      await ensureEventsAttendanceColumn(client);
 
       const today = new Date().toISOString().slice(0, 10);
 
@@ -150,14 +158,15 @@ const uploadCsv = async (req, res, next) => {
         }
 
         await client.query(
-          `INSERT INTO events (title, department, date, venue, total_students, status)
-           VALUES ($1, $2, $3, $4, $5, $6)`,
+          `INSERT INTO events (title, department, date, venue, total_students, attended_students, status)
+           VALUES ($1, $2, $3, $4, $5, $6, $7)`,
           [
             row.event_name,
             row.department,
             today,
             "Imported via upload",
             Number(row.total_students),
+            Number(row.attended_students),
             "scheduled",
           ]
         );

@@ -125,6 +125,13 @@ export default function UploadPage() {
       });
 
       const successMsg = `${response.data.message}. Inserted ${response.data.insertedRows} rows, skipped ${response.data.skippedDuplicates} duplicates.`;
+
+      // Refresh analytics and predictions right after upload so new data is reflected.
+      await Promise.all([
+        API.get("/analytics/overview"),
+        API.get("/predictions"),
+      ]);
+
       setSuccess(successMsg);
       toast.success("Upload successful! ✨");
       setFile(null);

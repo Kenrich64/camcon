@@ -5,12 +5,10 @@ const getOverviewStats = async (req, res, next) => {
   try {
     const result = await pool.query(`
       SELECT
-        COUNT(DISTINCT e.id)::int AS total_events,
-        COALESCE(SUM(COALESCE(p.attended, 0)), 0)::int AS total_participation,
-        COALESCE(ROUND(AVG(f.score)::numeric, 2), 0) AS average_feedback_score
-      FROM events e
-      LEFT JOIN participation p ON p.event_id = e.id
-      LEFT JOIN feedback f ON f.event_id = e.id
+        COUNT(*)::int AS total_events,
+        COALESCE(SUM(attended_students), 0)::int AS total_participation,
+        COALESCE(AVG(attended_students::float / NULLIF(total_students, 0)), 0) AS avg_attendance
+      FROM events
     `);
 
     const stats = result.rows[0];
@@ -18,7 +16,8 @@ const getOverviewStats = async (req, res, next) => {
     res.json({
       totalEvents: stats.total_events,
       totalParticipation: stats.total_participation,
-      averageFeedbackScore: Number(stats.average_feedback_score),
+      avgAttendance: Number(stats.avg_attendance),
+      averageFeedbackScore: Number(stats.avg_attendance),
     });
   } catch (err) {
     next(err);
