@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import API from "@/lib/api";
 import { Loader } from "lucide-react";
+import Link from "next/link";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -157,6 +158,15 @@ export default function LoginPage() {
                   "Sign In"
                 )}
               </button>
+
+              <Link href="/register" className="block">
+                <button
+                  type="button"
+                  className="w-full bg-green-500 px-4 py-2 text-white rounded hover:bg-green-400 transition-colors"
+                >
+                  Register
+                </button>
+              </Link>
             </form>
 
             {/* Footer */}

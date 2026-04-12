@@ -2,47 +2,38 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const pool = require("../db");
 
-// Register user
-const register = async (req, res, next) => {
-  const { email, password, name, role, adminKey } = req.body;
-
+const registerUser = async (req, res) => {
   try {
-    // Validate input
-    if (!email || !password || !name) {
-      return res.status(400).json({ error: "Missing required fields" });
+    const { name, email, password } = req.body;
+
+    if (!name || !email || !password) {
+      return res.status(400).json({ error: "All fields required" });
     }
 
-    // Check if user exists
-    const userExists = await pool.query(
+    const existingUser = await pool.query(
       "SELECT * FROM users WHERE email = $1",
       [email]
     );
-    if (userExists.rows.length > 0) {
+
+    if (existingUser.rows.length > 0) {
       return res.status(400).json({ error: "User already exists" });
     }
 
-    // Hash password
+    // Keep password hashing to remain compatible with existing bcrypt login flow.
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const wantsAdmin = role === "admin";
-    const canCreateAdmin =
-      wantsAdmin &&
-      process.env.ADMIN_CREATION_KEY &&
-      adminKey === process.env.ADMIN_CREATION_KEY;
-    const assignedRole = canCreateAdmin ? "admin" : "user";
-
-    // Create user
     const result = await pool.query(
-      "INSERT INTO users (email, password, name, role) VALUES ($1, $2, $3, $4) RETURNING id, email, name, role",
-      [email, hashedPassword, name, assignedRole]
+      "INSERT INTO users (name, email, password, role) VALUES ($1,$2,$3,'user') RETURNING id, name, email, role",
+      [name, email, hashedPassword]
     );
 
     res.status(201).json({
-      message: "User registered ✅",
+      message: "User registered successfully",
       user: result.rows[0],
     });
-  } catch (err) {
-    next(err);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Server error" });
   }
 };
 
@@ -94,4 +85,4 @@ const login = async (req, res, next) => {
   }
 };
 
-module.exports = { register, login };
+module.exports = { registerUser, login };
