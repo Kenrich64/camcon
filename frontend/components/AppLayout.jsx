@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
-import { Toaster } from "react-hot-toast";
+import { Toaster, toast } from "react-hot-toast";
+import { io } from "socket.io-client";
 
 export default function AppLayout({ children }) {
   const router = useRouter();
@@ -23,6 +24,28 @@ export default function AppLayout({ children }) {
 
     setIsReady(true);
   }, [router, pathname]);
+
+  useEffect(() => {
+    if (pathname === "/login") {
+      return undefined;
+    }
+
+    const baseUrl = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000").replace(/\/$/, "");
+    const socket = io(baseUrl, {
+      transports: ["websocket"],
+    });
+
+    socket.on("new_event", (eventData) => {
+      const title = eventData?.title || "Untitled Event";
+      toast.success(`New Event Added: ${title}`, {
+        duration: 5000,
+      });
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [pathname]);
 
   // Don't render sidebar/header on login page
   const isAuthPage = pathname === "/login";

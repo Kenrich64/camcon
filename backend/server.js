@@ -1,5 +1,7 @@
 const express = require("express");
 const cors = require("cors");
+const http = require("http");
+const { Server } = require("socket.io");
 require("dotenv").config();
 
 // Import routes
@@ -16,6 +18,7 @@ const seedRoutes = require("./routes/seed");
 const errorHandler = require("./middleware/errorHandler");
 
 const app = express();
+const server = http.createServer(app);
 
 // Middleware
 const allowedOrigins = (process.env.CLIENT_URLS || process.env.CLIENT_URL || "")
@@ -36,6 +39,23 @@ app.use(
 );
 app.use(express.json());
 
+const io = new Server(server, {
+  cors: {
+    origin: allowedOrigins.length > 0 ? allowedOrigins : "*",
+    methods: ["GET", "POST"],
+  },
+});
+
+app.set("io", io);
+
+io.on("connection", (socket) => {
+  console.log(`[Socket] Client connected: ${socket.id}`);
+
+  socket.on("disconnect", () => {
+    console.log(`[Socket] Client disconnected: ${socket.id}`);
+  });
+});
+
 // TEST ROUTE
 app.get("/", (req, res) => {
   res.send("Camcon Backend Running 🚀");
@@ -55,6 +75,6 @@ app.use("/seed", seedRoutes);
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`Server running on port ${PORT} 🚀`);
 });

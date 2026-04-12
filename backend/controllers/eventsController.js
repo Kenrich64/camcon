@@ -40,9 +40,15 @@ const createEvent = async (req, res, next) => {
       [title, department, date, venue, total_students || 0, status || "scheduled"]
     );
 
+    const createdEvent = result.rows[0];
+    const io = req.app.get("io");
+    if (io) {
+      io.emit("new_event", createdEvent);
+    }
+
     res.status(201).json({
       message: "Event created ✅",
-      event: result.rows[0],
+      event: createdEvent,
     });
   } catch (err) {
     next(err);
