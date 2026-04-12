@@ -5,6 +5,9 @@ import { useRouter } from "next/navigation";
 import API from "@/lib/api";
 import toast from "react-hot-toast";
 import {
+  LineChart,
+  Line,
+  Area,
   BarChart,
   Bar,
   XAxis,
@@ -21,8 +24,6 @@ import { CardSkeleton, GlassCard, StatCard, EmptyState } from "@/components/ui";
 import { Bot, Sparkles } from "lucide-react";
 import AIChatbot from "@/components/AIChatbot";
 
-const PIE_COLORS = ["#22d3ee", "#38bdf8", "#60a5fa", "#818cf8", "#a78bfa", "#f472b6"];
-
 export default function DashboardPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
@@ -35,6 +36,7 @@ export default function DashboardPage() {
   const [trend, setTrend] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [feedbackStats, setFeedbackStats] = useState([]);
+  const [attendanceComparison, setAttendanceComparison] = useState([]);
   const [insightLoading, setInsightLoading] = useState(false);
   const [aiInsight, setAiInsight] = useState("");
   const [typedInsight, setTypedInsight] = useState("");
@@ -48,17 +50,29 @@ export default function DashboardPage() {
 
     const loadDashboard = async () => {
       try {
-        const [overviewRes, departmentsRes, trendRes, feedbackRes] = await Promise.all([
+        const [overviewRes, departmentsRes, trendRes, feedbackRes, eventsRes] = await Promise.all([
           API.get("/analytics/overview"),
           API.get("/analytics/departments"),
           API.get("/analytics/trend"),
           API.get("/analytics/feedback"),
+          API.get("/events"),
         ]);
 
         setOverview(overviewRes.data);
         setDepartments(departmentsRes.data.series || []);
         setTrend(trendRes.data.series || []);
         setFeedbackStats(feedbackRes.data.series || []);
+
+        const events = eventsRes.data || [];
+        const comparison = [...events]
+          .sort((a, b) => Number(b.total_students || 0) - Number(a.total_students || 0))
+          .slice(0, 8)
+          .map((item) => ({
+            name: item.title?.length > 18 ? `${item.title.slice(0, 18)}...` : item.title,
+            attendance: Number(item.total_students || 0),
+          }));
+
+        setAttendanceComparison(comparison);
       } catch (apiError) {
         if (apiError?.response?.status === 401 || apiError?.response?.status === 403) {
           localStorage.removeItem("token");
@@ -146,7 +160,11 @@ export default function DashboardPage() {
                 <CardSkeleton key={i} />
               ))}
             </div>
-            <CardSkeleton className="h-80" />
+            <div className="grid gap-6 lg:grid-cols-5">
+              <ChartPanelSkeleton className="lg:col-span-3" />
+              <ChartPanelSkeleton className="lg:col-span-2" />
+            </div>
+            <ChartPanelSkeleton />
           </div>
         ) : (
           <>
@@ -240,22 +258,53 @@ export default function DashboardPage() {
                   <p className="text-sm text-slate-400 mt-1">Monthly attendance overview</p>
                 </div>
                 <div className="h-80">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={trend}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.15)" />
-                      <XAxis dataKey="month" stroke="#94a3b8" />
-                      <YAxis stroke="#94a3b8" />
-                      <Tooltip
-                        contentStyle={{
-                          background: "#0f172a",
-                          border: "1px solid rgba(148,163,184,0.18)",
-                          borderRadius: "12px",
-                          color: "#e2e8f0",
-                        }}
-                      />
-                      <Bar dataKey="totalAttendance" fill="#22d3ee" radius={[8, 8, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
+                  {trend.length > 0 ? (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={trend} margin={{ left: 4, right: 14, top: 16, bottom: 8 }}>
+                        <defs>
+                          <linearGradient id="trendFill" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#22d3ee" stopOpacity={0.45} />
+                            <stop offset="95%" stopColor="#22d3ee" stopOpacity={0.02} />
+                          </linearGradient>
+                          <linearGradient id="trendStroke" x1="0" y1="0" x2="1" y2="0">
+                            <stop offset="0%" stopColor="#22d3ee" />
+                            <stop offset="100%" stopColor="#818cf8" />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.15)" />
+                        <XAxis dataKey="month" stroke="#94a3b8" tickLine={false} />
+                        <YAxis stroke="#94a3b8" tickLine={false} />
+                        <Tooltip
+                          contentStyle={{
+                            background: "#0f172a",
+                            border: "1px solid rgba(148,163,184,0.18)",
+                            borderRadius: "12px",
+                            color: "#e2e8f0",
+                          }}
+                        />
+                        <Area
+                          type="monotone"
+                          dataKey="totalAttendance"
+                          stroke="none"
+                          fill="url(#trendFill)"
+                          isAnimationActive
+                          animationDuration={1000}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="totalAttendance"
+                          stroke="url(#trendStroke)"
+                          strokeWidth={3}
+                          dot={{ r: 3, strokeWidth: 1, fill: "#0f172a" }}
+                          activeDot={{ r: 6, stroke: "#22d3ee", strokeWidth: 2, fill: "#0f172a" }}
+                          isAnimationActive
+                          animationDuration={1200}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <EmptyState title="No trend data" icon="📈" />
+                  )}
                 </div>
               </GlassCard>
 
@@ -269,6 +318,20 @@ export default function DashboardPage() {
                   {departments.length > 0 ? (
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
+                        <defs>
+                          <linearGradient id="deptGradA" x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="0%" stopColor="#22d3ee" />
+                            <stop offset="100%" stopColor="#38bdf8" />
+                          </linearGradient>
+                          <linearGradient id="deptGradB" x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="0%" stopColor="#60a5fa" />
+                            <stop offset="100%" stopColor="#818cf8" />
+                          </linearGradient>
+                          <linearGradient id="deptGradC" x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="0%" stopColor="#a78bfa" />
+                            <stop offset="100%" stopColor="#f472b6" />
+                          </linearGradient>
+                        </defs>
                         <Pie
                           data={departments}
                           dataKey="participationCount"
@@ -276,14 +339,23 @@ export default function DashboardPage() {
                           outerRadius={100}
                           innerRadius={60}
                           paddingAngle={2}
+                          isAnimationActive
+                          animationDuration={1100}
                         >
                           {departments.map((entry, index) => (
                             <Cell
                               key={`dept-${index}`}
-                              fill={PIE_COLORS[index % PIE_COLORS.length]}
+                              fill={
+                                index % 3 === 0
+                                  ? "url(#deptGradA)"
+                                  : index % 3 === 1
+                                    ? "url(#deptGradB)"
+                                    : "url(#deptGradC)"
+                              }
                             />
                           ))}
                         </Pie>
+                        <Legend />
                         <Tooltip
                           contentStyle={{
                             background: "#0f172a",
@@ -300,31 +372,60 @@ export default function DashboardPage() {
               </GlassCard>
             </section>
 
-            {/* Feedback Stats */}
+            {/* Event Attendance Comparison */}
             <section>
               <GlassCard className="p-6">
                 <div className="mb-6">
-                  <h2 className="text-xl font-bold text-white">Feedback by Category</h2>
-                  <p className="text-sm text-slate-400 mt-1">Average scores and response counts</p>
+                  <h2 className="text-xl font-bold text-white">Event Attendance Comparison</h2>
+                  <p className="text-sm text-slate-400 mt-1">Top events by total attendance</p>
                 </div>
 
-                {feedbackStats.length > 0 ? (
-                  <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                    {feedbackStats.map((item) => (
-                      <div
-                        key={item.category}
-                        className="rounded-xl bg-slate-900/50 border border-white/10 p-5 hover:border-white/20 transition-all"
-                      >
-                        <p className="text-sm text-slate-400 font-medium">{item.category}</p>
-                        <p className="mt-3 text-3xl font-bold text-cyan-400">
-                          {Number(item.averageScore || 0).toFixed(1)}
-                        </p>
-                        <p className="mt-2 text-xs text-slate-500">{item.responseCount} responses</p>
-                      </div>
-                    ))}
+                {attendanceComparison.length > 0 ? (
+                  <div className="h-[26rem]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={attendanceComparison} margin={{ top: 20, right: 20, left: 0, bottom: 72 }}>
+                        <defs>
+                          <linearGradient id="barFill" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#22d3ee" />
+                            <stop offset="100%" stopColor="#3b82f6" />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.15)" />
+                        <XAxis
+                          dataKey="name"
+                          stroke="#94a3b8"
+                          tickLine={false}
+                          angle={-30}
+                          interval={0}
+                          textAnchor="end"
+                          height={70}
+                        />
+                        <YAxis stroke="#94a3b8" tickLine={false} />
+                        <Tooltip
+                          contentStyle={{
+                            background: "#0f172a",
+                            border: "1px solid rgba(148,163,184,0.18)",
+                            borderRadius: "12px",
+                            color: "#e2e8f0",
+                          }}
+                        />
+                        <Bar
+                          dataKey="attendance"
+                          fill="url(#barFill)"
+                          radius={[10, 10, 0, 0]}
+                          maxBarSize={56}
+                          isAnimationActive
+                          animationDuration={1200}
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
                   </div>
                 ) : (
-                  <EmptyState title="No feedback yet" icon="💬" description="Feedback data will appear here once collected" />
+                  <EmptyState
+                    title="No attendance data"
+                    icon="📊"
+                    description="Create events to start comparing attendance"
+                  />
                 )}
               </GlassCard>
             </section>
@@ -340,5 +441,17 @@ export default function DashboardPage() {
         }}
       />
     </div>
+  );
+}
+
+function ChartPanelSkeleton({ className = "" }) {
+  return (
+    <GlassCard className={`p-6 ${className}`} hoverable={false}>
+      <div className="mb-6 space-y-2">
+        <div className="h-6 w-56 animate-pulse rounded bg-slate-700/70" />
+        <div className="h-4 w-36 animate-pulse rounded bg-slate-700/50" />
+      </div>
+      <div className="h-72 animate-pulse rounded-xl bg-slate-800/70" />
+    </GlassCard>
   );
 }
