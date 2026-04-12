@@ -1,37 +1,11 @@
-const GroqSdk = require("groq-sdk");
+const axios = require("axios");
 const pool = require("../db");
 
-const Groq = GroqSdk.default || GroqSdk;
-let groqClient = null;
-
-// Debug logging for Groq initialization
-console.log("[AI INIT] GROQ_API_KEY:", process.env.GROQ_API_KEY ? "EXISTS ✅" : "MISSING ⚠️");
-console.log("[AI INIT] Groq SDK loaded:", typeof Groq !== "undefined" ? "✅" : "❌");
-
-const getGroqClient = () => {
-  if (!process.env.GROQ_API_KEY) {
-    console.warn("[AI] No GROQ_API_KEY found in environment");
-    return null;
-  }
-
-  if (!groqClient) {
-    try {
-      groqClient = new Groq({
-        apiKey: process.env.GROQ_API_KEY,
-      });
-      console.log("[AI] Groq client initialized successfully ✅");
-    } catch (error) {
-      console.error("[AI] Failed to initialize Groq client:", error.message);
-      groqClient = null;
-      return null;
-    }
-  }
-
-  return groqClient;
-};
-
-const GROQ_MODEL = "llama3-8b-8192";
+const CEREBRAS_URL = "https://api.cerebras.ai/v1/chat/completions";
+const CEREBRAS_MODEL = "llama3.1-8b";
 const FALLBACK_MESSAGE = "AI service temporarily unavailable";
+
+console.log("[AI INIT] CEREBRAS_API_KEY:", process.env.CEREBRAS_API_KEY ? "EXISTS" : "MISSING");
 
 const normalizeBody = (body) => {
   if (body && typeof body === "object" && body.data && typeof body.data === "object") {
@@ -50,29 +24,22 @@ const stringifyContext = (value) => {
 };
 
 const buildInsightsPrompt = ({ payload, statsContext }) => {
-  const contextText = stringifyContext(payload);
-  const statsText = stringifyContext(statsContext);
-
   return [
-    "Act as a campus analytics expert.",
-    "Analyze the data below and return concise, practical findings.",
-    "Focus strongly on event volume, participation statistics, and feedback averages.",
-    "Use the database context to make the response more specific and grounded.",
-    "Include the following sections in plain text: insights, problems, suggestions.",
-    "Use short bullet points.",
+    "You are a campus analytics assistant.",
+    "Analyze the input and return concise practical insights.",
+    "Respond with sections: insights, problems, suggestions.",
     "Payload:",
-    contextText,
+    stringifyContext(payload),
     "Database context:",
-    statsText,
+    stringifyContext(statsContext),
   ].join("\n");
 };
 
 const buildChatSystemPrompt = ({ dbContext, frontendContext }) => {
   return [
-    "You are Camcon AI Assistant, an expert campus analytics and event operations advisor.",
-    "Answer the user's question using the provided context about events, participation, and feedback.",
-    "Be concise, practical, and specific.",
-    "If information is missing, say so briefly and suggest what to check.",
+    "You are a campus analytics assistant.",
+    "Answer using event and participation data.",
+    "Keep responses short and actionable.",
     "Backend context:",
     stringifyContext(dbContext),
     "Frontend context:",
@@ -80,50 +47,43 @@ const buildChatSystemPrompt = ({ dbContext, frontendContext }) => {
   ].join("\n");
 };
 
-const createGroqCompletion = async (messages, fallbackMessage = FALLBACK_MESSAGE) => {
-  const groq = getGroqClient();
-
-  if (!groq) {
-    console.warn("[AI] Groq client unavailable, using fallback message");
+const createCerebrasCompletion = async (messages, fallbackMessage = FALLBACK_MESSAGE) => {
+  if (!process.env.CEREBRAS_API_KEY) {
+    console.warn("[AI] Missing CEREBRAS_API_KEY, returning fallback");
     return fallbackMessage;
   }
 
   try {
-    console.log(`[AI] Requesting ${GROQ_MODEL} with ${messages.length} messages`);
-    
-    const response = await groq.chat.completions.create({
-      model: GROQ_MODEL,
-      messages,
-      temperature: 0.3,
-      max_tokens: 1024,
-    });
+    const response = await axios.post(
+      CEREBRAS_URL,
+      {
+        model: CEREBRAS_MODEL,
+        messages,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.CEREBRAS_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        timeout: 20000,
+      }
+    );
 
-    const content = response.choices?.[0]?.message?.content?.trim();
-    if (!content) {
-      console.warn("[AI] Empty response from Groq");
-      return fallbackMessage;
-    }
-
-    console.log("[AI] Groq response successful ✅");
-    return content;
-  } catch (error) {
-    console.error("[AI] Groq request failed:", {
-      message: error.message,
-      code: error.code,
-      status: error.status,
-    });
+    return response?.data?.choices?.[0]?.message?.content?.trim() || fallbackMessage;
+  } catch (err) {
+    console.error("[AI] Cerebras error:", err.message);
     return fallbackMessage;
   }
 };
 
 const fetchInsightsContext = async () => {
-  const [eventsResult, participationResult, feedbackResult] = await Promise.all([
+  const [eventsResult, attendanceResult, feedbackResult] = await Promise.all([
     pool.query(`SELECT COUNT(*)::int AS total_events FROM events`),
     pool.query(`
       SELECT
-        COALESCE(SUM(attended), 0)::int AS total_attended,
-        COUNT(*)::int AS participation_records
-      FROM participation
+        COALESCE(SUM(attended_students), 0)::int AS total_attended,
+        COALESCE(ROUND(AVG(attended_students::float / NULLIF(total_students, 0))::numeric, 2), 0) AS avg_attendance
+      FROM events
     `),
     pool.query(`
       SELECT
@@ -137,9 +97,9 @@ const fetchInsightsContext = async () => {
     events: {
       totalEvents: eventsResult.rows[0]?.total_events || 0,
     },
-    participation: {
-      totalAttended: participationResult.rows[0]?.total_attended || 0,
-      records: participationResult.rows[0]?.participation_records || 0,
+    attendance: {
+      totalAttended: attendanceResult.rows[0]?.total_attended || 0,
+      avgAttendance: Number(attendanceResult.rows[0]?.avg_attendance || 0),
     },
     feedback: {
       averageFeedbackScore: Number(feedbackResult.rows[0]?.average_feedback_score || 0),
@@ -148,72 +108,21 @@ const fetchInsightsContext = async () => {
   };
 };
 
-const generateInsights = async (req, res) => {
-  const payload = normalizeBody(req.body);
-
-  if (!payload || typeof payload !== "object" || Array.isArray(payload) || Object.keys(payload).length === 0) {
-    return res.status(400).json({ error: "Analytics payload is required" });
-  }
-
-  try {
-    console.log("[AI] Generating insights with Groq model:", GROQ_MODEL);
-
-    const statsContext = await fetchInsightsContext();
-    console.log("[AI] Fetched stats context:", {
-      events: statsContext.events?.totalEvents,
-      participation: statsContext.participation?.totalAttended,
-      feedback: statsContext.feedback?.averageFeedbackScore,
-    });
-
-    const insightText = await createGroqCompletion(
-      [
-        {
-          role: "system",
-          content: buildInsightsPrompt({
-            payload,
-            statsContext,
-          }),
-        },
-        {
-          role: "user",
-          content: "Analyze this dashboard data and produce the requested output.",
-        },
-      ],
-      FALLBACK_MESSAGE
-    );
-
-    console.log("[AI] Insights generated successfully ✅");
-
-    return res.json({
-      insight: insightText,
-    });
-  } catch (err) {
-    console.error("[AI] Insights generation failed:", err.message);
-    return res.json({
-      insight: FALLBACK_MESSAGE,
-      error: "AI service unavailable, using fallback insights",
-    });
-  }
-};
-
 const fetchChatContext = async () => {
   const [overviewResult, departmentResult, recentEventsResult] = await Promise.all([
     pool.query(`
       SELECT
-        COUNT(DISTINCT e.id)::int AS total_events,
-        COALESCE(SUM(COALESCE(p.attended, 0)), 0)::int AS total_participation,
-        COALESCE(ROUND(AVG(f.score)::numeric, 2), 0) AS average_feedback_score
-      FROM events e
-      LEFT JOIN participation p ON p.event_id = e.id
-      LEFT JOIN feedback f ON f.event_id = e.id
+        COUNT(*)::int AS total_events,
+        COALESCE(SUM(attended_students), 0)::int AS total_participation,
+        COALESCE(ROUND(AVG(attended_students::float / NULLIF(total_students, 0))::numeric, 2), 0) AS avg_attendance
+      FROM events
     `),
     pool.query(`
       SELECT
-        e.department,
-        COALESCE(SUM(COALESCE(p.attended, 0)), 0)::int AS attendance
-      FROM events e
-      LEFT JOIN participation p ON p.event_id = e.id
-      GROUP BY e.department
+        department,
+        COALESCE(SUM(attended_students), 0)::int AS attendance
+      FROM events
+      GROUP BY department
       ORDER BY attendance DESC
       LIMIT 5
     `),
@@ -229,11 +138,77 @@ const fetchChatContext = async () => {
     overview: {
       totalEvents: overviewResult.rows[0]?.total_events || 0,
       totalParticipation: overviewResult.rows[0]?.total_participation || 0,
-      averageFeedbackScore: Number(overviewResult.rows[0]?.average_feedback_score || 0),
+      avgAttendance: Number(overviewResult.rows[0]?.avg_attendance || 0),
     },
     topDepartments: departmentResult.rows,
     recentEvents: recentEventsResult.rows,
   };
+};
+
+const getSmartFallbackFromContext = (dbContext, question) => {
+  const topDepartment = dbContext?.topDepartments?.[0]?.department || "CSE";
+  const topAttendance = dbContext?.topDepartments?.[0]?.attendance || 0;
+  const totalEvents = dbContext?.overview?.totalEvents || 0;
+  const totalParticipation = dbContext?.overview?.totalParticipation || 0;
+  const recentTitle = dbContext?.recentEvents?.[0]?.title || "the latest campus event";
+
+  if ((question || "").toLowerCase().includes("department")) {
+    return `Based on current data, ${topDepartment} shows the strongest participation trend with about ${topAttendance} attendees.`;
+  }
+
+  return `Based on current data, there are ${totalEvents} events with ${totalParticipation} total participation. Recent activity includes ${recentTitle}. ${topDepartment} is currently leading engagement.`;
+};
+
+const getSmartInsightsFallback = (statsContext) => {
+  const totalEvents = statsContext?.events?.totalEvents || 0;
+  const totalAttended = statsContext?.attendance?.totalAttended || 0;
+  const avgAttendance = statsContext?.attendance?.avgAttendance || 0;
+
+  return [
+    "insights:",
+    `- Total events tracked: ${totalEvents}`,
+    `- Total attended students: ${totalAttended}`,
+    `- Average attendance ratio: ${avgAttendance}`,
+    "problems:",
+    "- Some events may need stronger participation strategies.",
+    "suggestions:",
+    "- Focus promotion on lower-performing departments and time slots.",
+  ].join("\n");
+};
+
+const generateInsights = async (req, res) => {
+  const payload = normalizeBody(req.body);
+
+  if (!payload || typeof payload !== "object" || Array.isArray(payload) || Object.keys(payload).length === 0) {
+    return res.status(400).json({ error: "Analytics payload is required" });
+  }
+
+  try {
+    const statsContext = await fetchInsightsContext();
+
+    const insightText = await createCerebrasCompletion(
+      [
+        {
+          role: "system",
+          content: buildInsightsPrompt({ payload, statsContext }),
+        },
+        {
+          role: "user",
+          content: "Analyze this dashboard data and provide insights.",
+        },
+      ],
+      getSmartInsightsFallback(statsContext)
+    );
+
+    return res.json({ insight: insightText });
+  } catch (err) {
+    console.error("[AI] Insights error:", err.message);
+    const statsContext = await fetchInsightsContext().catch(() => null);
+    return res.json({
+      insight: getSmartInsightsFallback(statsContext),
+      error: "AI service unavailable, using smart fallback",
+    });
+  }
 };
 
 const chatWithAssistant = async (req, res) => {
@@ -245,35 +220,28 @@ const chatWithAssistant = async (req, res) => {
   }
 
   try {
-    console.log("[AI] Chat request received with Groq model:", GROQ_MODEL);
-    console.log("[AI] Question:", question.substring(0, 100));
-
     const dbContext = await fetchChatContext();
-    console.log("[AI] Fetched chat context ✅");
 
-    const responseText = await createGroqCompletion([
-      {
-        role: "system",
-        content: buildChatSystemPrompt({
-          dbContext,
-          frontendContext,
-        }),
-      },
-      {
-        role: "user",
-        content: question.trim(),
-      },
-    ]);
+    const responseText = await createCerebrasCompletion(
+      [
+        {
+          role: "system",
+          content: buildChatSystemPrompt({ dbContext, frontendContext }),
+        },
+        {
+          role: "user",
+          content: question.trim(),
+        },
+      ],
+      getSmartFallbackFromContext(dbContext, question)
+    );
 
-    console.log("[AI] Chat response generated successfully ✅");
-
-    return res.json({
-      response: responseText,
-    });
+    return res.json({ response: responseText });
   } catch (err) {
-    console.error("[AI] Chat failed:", err.message);
+    console.error("[AI] Chat error:", err.message);
+    const dbContext = await fetchChatContext().catch(() => null);
     return res.json({
-      response: FALLBACK_MESSAGE,
+      response: getSmartFallbackFromContext(dbContext, question),
       error: "Chat service temporarily unavailable",
     });
   }
