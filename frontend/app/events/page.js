@@ -45,13 +45,7 @@ export default function EventsPage() {
   const [form, setForm] = useState(initialForm);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
     const savedRole = localStorage.getItem("role") || "user";
-
-    if (!token) {
-      router.replace("/login");
-      return;
-    }
 
     setRole(savedRole);
     loadEvents();

@@ -69,12 +69,6 @@ export default function PredictionsPage() {
   };
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      router.replace("/login");
-      return;
-    }
-
     loadPredictions();
   }, [router]);
 

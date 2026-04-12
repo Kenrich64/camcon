@@ -44,12 +44,6 @@ export default function DashboardPage() {
   const reportRef = useRef(null);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      router.replace("/login");
-      return;
-    }
-
     const loadDashboard = async () => {
       try {
         console.log("[Dashboard] Loading data...");

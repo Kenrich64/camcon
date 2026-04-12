@@ -18,13 +18,7 @@ export default function UploadPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
     const role = localStorage.getItem("role");
-
-    if (!token) {
-      router.replace("/login");
-      return;
-    }
 
     if (role !== "admin") {
       router.replace("/dashboard");
@@ -96,12 +90,6 @@ export default function UploadPage() {
       const msg = "Please select a CSV file first";
       setError(msg);
       toast.error(msg);
-      return;
-    }
-
-    const token = localStorage.getItem("token");
-    if (!token) {
-      router.push("/login");
       return;
     }
 

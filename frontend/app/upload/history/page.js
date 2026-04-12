@@ -44,13 +44,7 @@ export default function UploadHistoryPage() {
   };
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
     const role = localStorage.getItem("role");
-
-    if (!token) {
-      router.replace("/login");
-      return;
-    }
 
     if (role !== "admin") {
       router.replace("/dashboard");
