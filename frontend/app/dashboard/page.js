@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 import API from "@/lib/api";
 import toast from "react-hot-toast";
 import {
@@ -40,8 +42,10 @@ export default function DashboardPage() {
   const [timeRange, setTimeRange] = useState("90");
   const [selectedDepartment, setSelectedDepartment] = useState("all");
   const [insightLoading, setInsightLoading] = useState(false);
+  const [exportLoading, setExportLoading] = useState(false);
   const [aiInsight, setAiInsight] = useState("");
   const [typedInsight, setTypedInsight] = useState("");
+  const reportRef = useRef(null);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -211,9 +215,65 @@ export default function DashboardPage() {
     }
   };
 
+  const handleDownloadReport = async () => {
+    if (!reportRef.current) {
+      toast.error("Report container not available");
+      return;
+    }
+
+    setExportLoading(true);
+
+    try {
+      const canvas = await html2canvas(reportRef.current, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: "#020617",
+      });
+
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF("p", "mm", "a4");
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 10;
+      const imageWidth = pageWidth - margin * 2;
+      const imageHeight = (canvas.height * imageWidth) / canvas.width;
+
+      pdf.setFontSize(18);
+      pdf.text("Camcon Analytics Report", margin, 14);
+
+      pdf.setFontSize(10);
+      pdf.setTextColor(90, 90, 90);
+      pdf.text(`Generated: ${new Date().toLocaleString()}`, margin, 20);
+      pdf.text(`Total Events: ${overview.totalEvents}`, margin, 25);
+      pdf.text(`Total Participation: ${overview.totalParticipation}`, margin + 55, 25);
+      pdf.text(`Avg Feedback: ${Number(overview.averageFeedbackScore || 0).toFixed(2)}`, margin + 120, 25);
+
+      let remainingHeight = imageHeight;
+      let imageY = 30;
+
+      pdf.addImage(imgData, "PNG", margin, imageY, imageWidth, imageHeight);
+      remainingHeight -= pageHeight - imageY;
+
+      while (remainingHeight > 0) {
+        pdf.addPage();
+        imageY = remainingHeight - imageHeight;
+        pdf.addImage(imgData, "PNG", margin, imageY, imageWidth, imageHeight);
+        remainingHeight -= pageHeight;
+      }
+
+      pdf.save(`camcon-analytics-report-${Date.now()}.pdf`);
+      toast.success("Report downloaded successfully");
+    } catch (pdfError) {
+      console.error("PDF export failed:", pdfError);
+      toast.error("Failed to generate PDF report");
+    } finally {
+      setExportLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
-      <main className="px-4 py-8 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+      <main ref={reportRef} className="px-4 py-8 sm:px-6 lg:px-8 max-w-7xl mx-auto">
         {error ? (
           <div className="mb-6 rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
             {error}
@@ -252,6 +312,15 @@ export default function DashboardPage() {
                     </div>
 
                     <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={handleDownloadReport}
+                        disabled={exportLoading || loading}
+                        className="inline-flex items-center gap-2 rounded-xl border border-cyan-300/30 bg-cyan-400/10 px-4 py-2.5 text-sm font-semibold text-cyan-200 transition-all duration-300 hover:bg-cyan-400/20 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {exportLoading ? "Preparing PDF..." : "Download Report"}
+                      </button>
+
                       <button
                         type="button"
                         onClick={handleGenerateInsights}
