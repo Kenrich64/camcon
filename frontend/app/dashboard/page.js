@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import API from "@/lib/api";
 import toast from "react-hot-toast";
@@ -36,7 +36,9 @@ export default function DashboardPage() {
   const [trend, setTrend] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [feedbackStats, setFeedbackStats] = useState([]);
-  const [attendanceComparison, setAttendanceComparison] = useState([]);
+  const [rawEvents, setRawEvents] = useState([]);
+  const [timeRange, setTimeRange] = useState("90");
+  const [selectedDepartment, setSelectedDepartment] = useState("all");
   const [insightLoading, setInsightLoading] = useState(false);
   const [aiInsight, setAiInsight] = useState("");
   const [typedInsight, setTypedInsight] = useState("");
@@ -62,17 +64,7 @@ export default function DashboardPage() {
         setDepartments(departmentsRes.data.series || []);
         setTrend(trendRes.data.series || []);
         setFeedbackStats(feedbackRes.data.series || []);
-
-        const events = eventsRes.data || [];
-        const comparison = [...events]
-          .sort((a, b) => Number(b.total_students || 0) - Number(a.total_students || 0))
-          .slice(0, 8)
-          .map((item) => ({
-            name: item.title?.length > 18 ? `${item.title.slice(0, 18)}...` : item.title,
-            attendance: Number(item.total_students || 0),
-          }));
-
-        setAttendanceComparison(comparison);
+        setRawEvents(eventsRes.data || []);
       } catch (apiError) {
         if (apiError?.response?.status === 401 || apiError?.response?.status === 403) {
           localStorage.removeItem("token");
@@ -115,6 +107,81 @@ export default function DashboardPage() {
 
     return () => clearInterval(timer);
   }, [aiInsight]);
+
+  const departmentOptions = useMemo(() => {
+    const set = new Set();
+    rawEvents.forEach((event) => {
+      if (event?.department) {
+        set.add(event.department);
+      }
+    });
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [rawEvents]);
+
+  const filteredEvents = useMemo(() => {
+    const now = new Date();
+    const dayRange = Number(timeRange);
+
+    return rawEvents.filter((event) => {
+      const departmentMatch = selectedDepartment === "all" || event.department === selectedDepartment;
+
+      const eventDate = event?.date ? new Date(event.date) : null;
+      const hasValidDate = eventDate && !Number.isNaN(eventDate.getTime());
+      const dateMatch =
+        dayRange === 0 || !hasValidDate
+          ? true
+          : now.getTime() - eventDate.getTime() <= dayRange * 24 * 60 * 60 * 1000;
+
+      return departmentMatch && dateMatch;
+    });
+  }, [rawEvents, selectedDepartment, timeRange]);
+
+  const participationTrendData = useMemo(() => {
+    const grouped = new Map();
+
+    filteredEvents.forEach((event) => {
+      const eventDate = event?.date ? new Date(event.date) : null;
+      if (!eventDate || Number.isNaN(eventDate.getTime())) {
+        return;
+      }
+
+      const monthKey = `${eventDate.getFullYear()}-${String(eventDate.getMonth() + 1).padStart(2, "0")}`;
+      grouped.set(monthKey, (grouped.get(monthKey) || 0) + Number(event.total_students || 0));
+    });
+
+    return Array.from(grouped.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([monthKey, totalAttendance]) => ({
+        month: formatMonthLabel(monthKey),
+        totalAttendance,
+      }));
+  }, [filteredEvents]);
+
+  const departmentDistributionData = useMemo(() => {
+    const grouped = new Map();
+
+    filteredEvents.forEach((event) => {
+      const department = event.department || "Unknown";
+      grouped.set(department, (grouped.get(department) || 0) + Number(event.total_students || 0));
+    });
+
+    return Array.from(grouped.entries())
+      .map(([department, participationCount]) => ({
+        department,
+        participationCount,
+      }))
+      .sort((a, b) => b.participationCount - a.participationCount);
+  }, [filteredEvents]);
+
+  const attendanceComparisonData = useMemo(() => {
+    return [...filteredEvents]
+      .sort((a, b) => Number(b.total_students || 0) - Number(a.total_students || 0))
+      .slice(0, 8)
+      .map((item) => ({
+        name: item.title?.length > 18 ? `${item.title.slice(0, 18)}...` : item.title,
+        attendance: Number(item.total_students || 0),
+      }));
+  }, [filteredEvents]);
 
   const handleGenerateInsights = async () => {
     setInsightLoading(true);
@@ -251,16 +318,51 @@ export default function DashboardPage() {
 
             {/* Charts Grid */}
             <section className="mb-8 grid gap-6 lg:grid-cols-5">
+              <GlassCard className="lg:col-span-5 p-4 sm:p-5">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <h3 className="text-sm font-semibold uppercase tracking-wide text-cyan-300">Chart Filters</h3>
+                    <p className="text-xs text-slate-400">Refine charts by time window and department</p>
+                  </div>
+
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                    <select
+                      value={timeRange}
+                      onChange={(event) => setTimeRange(event.target.value)}
+                      className="rounded-lg border border-white/10 bg-slate-900 px-3 py-2 text-sm text-slate-100"
+                    >
+                      <option value="30">Last 30 days</option>
+                      <option value="90">Last 90 days</option>
+                      <option value="180">Last 180 days</option>
+                      <option value="0">All time</option>
+                    </select>
+
+                    <select
+                      value={selectedDepartment}
+                      onChange={(event) => setSelectedDepartment(event.target.value)}
+                      className="rounded-lg border border-white/10 bg-slate-900 px-3 py-2 text-sm text-slate-100"
+                    >
+                      <option value="all">All departments</option>
+                      {departmentOptions.map((department) => (
+                        <option key={department} value={department}>
+                          {department}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </GlassCard>
+
               {/* Trend Chart */}
               <GlassCard className="lg:col-span-3 p-6">
                 <div className="mb-5">
                   <h2 className="text-xl font-bold text-white">Participation Trend</h2>
-                  <p className="text-sm text-slate-400 mt-1">Monthly attendance overview</p>
+                  <p className="text-sm text-slate-400 mt-1">Attendance over time for selected filters</p>
                 </div>
                 <div className="h-80">
-                  {trend.length > 0 ? (
+                  {participationTrendData.length > 0 ? (
                     <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={trend} margin={{ left: 4, right: 14, top: 16, bottom: 8 }}>
+                      <LineChart data={participationTrendData} margin={{ left: 4, right: 14, top: 16, bottom: 8 }}>
                         <defs>
                           <linearGradient id="trendFill" x1="0" y1="0" x2="0" y2="1">
                             <stop offset="5%" stopColor="#22d3ee" stopOpacity={0.45} />
@@ -312,10 +414,10 @@ export default function DashboardPage() {
               <GlassCard className="lg:col-span-2 p-6">
                 <div className="mb-5">
                   <h2 className="text-xl font-bold text-white">Department Distribution</h2>
-                  <p className="text-sm text-slate-400 mt-1">Participation breakdown</p>
+                  <p className="text-sm text-slate-400 mt-1">Attendance split by department</p>
                 </div>
                 <div className="h-80">
-                  {departments.length > 0 ? (
+                  {departmentDistributionData.length > 0 ? (
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <defs>
@@ -333,7 +435,7 @@ export default function DashboardPage() {
                           </linearGradient>
                         </defs>
                         <Pie
-                          data={departments}
+                          data={departmentDistributionData}
                           dataKey="participationCount"
                           nameKey="department"
                           outerRadius={100}
@@ -342,7 +444,7 @@ export default function DashboardPage() {
                           isAnimationActive
                           animationDuration={1100}
                         >
-                          {departments.map((entry, index) => (
+                          {departmentDistributionData.map((entry, index) => (
                             <Cell
                               key={`dept-${index}`}
                               fill={
@@ -377,13 +479,13 @@ export default function DashboardPage() {
               <GlassCard className="p-6">
                 <div className="mb-6">
                   <h2 className="text-xl font-bold text-white">Event Attendance Comparison</h2>
-                  <p className="text-sm text-slate-400 mt-1">Top events by total attendance</p>
+                  <p className="text-sm text-slate-400 mt-1">Top events by attendance for selected filters</p>
                 </div>
 
-                {attendanceComparison.length > 0 ? (
+                {attendanceComparisonData.length > 0 ? (
                   <div className="h-[26rem]">
                     <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={attendanceComparison} margin={{ top: 20, right: 20, left: 0, bottom: 72 }}>
+                      <BarChart data={attendanceComparisonData} margin={{ top: 20, right: 20, left: 0, bottom: 72 }}>
                         <defs>
                           <linearGradient id="barFill" x1="0" y1="0" x2="0" y2="1">
                             <stop offset="0%" stopColor="#22d3ee" />
@@ -454,4 +556,14 @@ function ChartPanelSkeleton({ className = "" }) {
       <div className="h-72 animate-pulse rounded-xl bg-slate-800/70" />
     </GlassCard>
   );
+}
+
+function formatMonthLabel(monthKey) {
+  const [year, month] = monthKey.split("-");
+  const date = new Date(Number(year), Number(month) - 1, 1);
+
+  return date.toLocaleDateString(undefined, {
+    month: "short",
+    year: "2-digit",
+  });
 }
