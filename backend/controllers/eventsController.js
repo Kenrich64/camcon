@@ -61,18 +61,48 @@ const updateEvent = async (req, res, next) => {
   const { title, department, date, venue, total_students, status } = req.body;
 
   try {
+    // Get the old event first to determine update type
+    const oldEventResult = await pool.query(
+      "SELECT * FROM events WHERE id = $1",
+      [id]
+    );
+
+    if (oldEventResult.rows.length === 0) {
+      return res.status(404).json({ error: "Event not found" });
+    }
+
+    const oldEvent = oldEventResult.rows[0];
+
     const result = await pool.query(
       "UPDATE events SET title=$1, department=$2, date=$3, venue=$4, total_students=$5, status=$6 WHERE id=$7 RETURNING *",
       [title, department, date, venue, total_students, status, id]
     );
 
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: "Event not found" });
+    const updatedEvent = result.rows[0];
+
+    // Determine update type based on what changed
+    let updateType = "updated";
+    if (oldEvent.date !== date && status !== "cancelled") {
+      updateType = "postponed";
+    } else if (oldEvent.venue !== venue) {
+      updateType = "venue_changed";
+    } else if (oldEvent.status === "scheduled" && status === "cancelled") {
+      updateType = "cancelled";
+    }
+
+    // Emit socket notification
+    const io = req.app.get("io");
+    if (io) {
+      io.emit("event_update", {
+        type: updateType,
+        event: updatedEvent,
+        message: `Event Update: ${updatedEvent.title} has been ${updateType}`,
+      });
     }
 
     res.json({
       message: "Event updated ✅",
-      event: result.rows[0],
+      event: updatedEvent,
     });
   } catch (err) {
     next(err);
@@ -93,9 +123,21 @@ const deleteEvent = async (req, res, next) => {
       return res.status(404).json({ error: "Event not found" });
     }
 
+    const deletedEvent = result.rows[0];
+
+    // Emit socket notification for cancelled event
+    const io = req.app.get("io");
+    if (io) {
+      io.emit("event_update", {
+        type: "cancelled",
+        event: deletedEvent,
+        message: `Event Update: ${deletedEvent.title} has been cancelled`,
+      });
+    }
+
     res.json({
       message: "Event deleted ✅",
-      event: result.rows[0],
+      event: deletedEvent,
     });
   } catch (err) {
     next(err);

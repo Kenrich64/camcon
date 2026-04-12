@@ -121,6 +121,22 @@ export default function EventsPage() {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
       <main className="px-4 py-8 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        {/* Header with Add Event Button */}
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-white">Events</h1>
+            <p className="text-slate-400 text-sm mt-2">Manage and track campus events</p>
+          </div>
+          {role === "admin" && (
+            <button
+              onClick={() => setShowForm(true)}
+              className="btn-primary inline-flex items-center gap-2"
+            >
+              <Plus size={20} /> Add Event
+            </button>
+          )}
+        </div>
+
         {error && (
           <div className="mb-6 rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
             {error}

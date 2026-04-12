@@ -42,6 +42,57 @@ export default function AppLayout({ children }) {
       });
     });
 
+    // Event update notification handler
+    socket.on("event_update", (data) => {
+      const { type, event, message } = data;
+      const eventTitle = event?.title || "Event";
+
+      // Color-coded toast based on type
+      const toastConfig = {
+        duration: 5000,
+        icon: null,
+      };
+
+      switch (type) {
+        case "created":
+          toast.success(`Event Update: ${eventTitle} has been created`, toastConfig);
+          break;
+        case "cancelled":
+          toast.error(`Event Update: ${eventTitle} has been cancelled`, toastConfig);
+          break;
+        case "postponed":
+          toast(
+            `Event Update: ${eventTitle} has been postponed`,
+            {
+              ...toastConfig,
+              icon: "⏰",
+              style: {
+                background: "#92400e",
+                color: "#fef3c7",
+                border: "1px solid #d97706",
+              },
+            }
+          );
+          break;
+        case "venue_changed":
+          toast(
+            `Event Update: ${eventTitle} venue has changed`,
+            {
+              ...toastConfig,
+              icon: "📍",
+              style: {
+                background: "#1e3a8a",
+                color: "#bfdbfe",
+                border: "1px solid #3b82f6",
+              },
+            }
+          );
+          break;
+        default:
+          toast(message || `Event ${eventTitle} updated`, toastConfig);
+      }
+    });
+
     return () => {
       socket.disconnect();
     };
