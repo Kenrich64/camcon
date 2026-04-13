@@ -39,7 +39,18 @@ CREATE TABLE IF NOT EXISTS feedback (
   created_at TIMESTAMP DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS notifications (
+  id SERIAL PRIMARY KEY,
+  title VARCHAR(255),
+  message TEXT,
+  type VARCHAR(50),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  is_read BOOLEAN DEFAULT FALSE
+);
+
 CREATE INDEX IF NOT EXISTS idx_events_department ON events(department);
 CREATE INDEX IF NOT EXISTS idx_events_date ON events(date);
 CREATE INDEX IF NOT EXISTS idx_participation_event_id ON participation(event_id);
 CREATE INDEX IF NOT EXISTS idx_feedback_event_id ON feedback(event_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_created_at ON notifications(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_notifications_is_read ON notifications(is_read);

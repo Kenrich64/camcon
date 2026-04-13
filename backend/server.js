@@ -13,6 +13,7 @@ const predictionsRoutes = require("./routes/predictions");
 const uploadRoutes = require("./routes/upload");
 const aiRoutes = require("./routes/ai");
 const seedRoutes = require("./routes/seed");
+const notificationsRoutes = require("./routes/notifications");
 
 // Import middleware
 const errorHandler = require("./middleware/errorHandler");
@@ -70,6 +71,7 @@ app.use("/predictions", predictionsRoutes);
 app.use("/upload", uploadRoutes);
 app.use("/ai", aiRoutes);
 app.use("/seed", seedRoutes);
+app.use("/notifications", notificationsRoutes);
 
 // Error handling middleware (must be last)
 app.use(errorHandler);

@@ -1,4 +1,5 @@
 const pool = require("../db");
+const { createNotification } = require("./notificationsController");
 
 // Get all events
 const getEvents = async (req, res, next) => {
@@ -41,6 +42,12 @@ const createEvent = async (req, res, next) => {
     );
 
     const createdEvent = result.rows[0];
+    await createNotification({
+      title: "Event Update",
+      message: `${createdEvent.title} has been created`,
+      type: "new",
+    });
+
     const io = req.app.get("io");
     if (io) {
       io.emit("new_event", createdEvent);
@@ -108,6 +115,19 @@ const updateEvent = async (req, res, next) => {
     }
 
     // Emit socket notification
+    if (["cancelled", "postponed", "venue_changed", "updated"].includes(updateType)) {
+      const statusText =
+        updateType === "venue_changed"
+          ? "venue has changed"
+          : `has been ${updateType}`;
+
+      await createNotification({
+        title: "Event Update",
+        message: `${updatedEvent.title} ${statusText}`,
+        type: "update",
+      });
+    }
+
     const io = req.app.get("io");
     if (io) {
       io.emit("event_update", {
@@ -141,6 +161,12 @@ const deleteEvent = async (req, res, next) => {
     }
 
     const deletedEvent = result.rows[0];
+
+    await createNotification({
+      title: "Event Update",
+      message: `${deletedEvent.title} has been cancelled`,
+      type: "update",
+    });
 
     // Emit socket notification for cancelled event
     const io = req.app.get("io");
