@@ -199,6 +199,83 @@ export default function DashboardPage() {
       }));
   }, [filteredEvents]);
 
+  const statusTimelineData = useMemo(() => {
+    return [...filteredEvents]
+      .sort((a, b) => new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime())
+      .slice(0, 6)
+      .map((event) => {
+        const normalizedStatus = String(event.status || "scheduled").toLowerCase();
+        const currentStage =
+          normalizedStatus === "completed"
+            ? "completed"
+            : normalizedStatus === "scheduled"
+              ? "created"
+              : "updated";
+
+        return {
+          id: event.id,
+          title: event.title,
+          department: event.department,
+          stage: currentStage,
+          date: event.date,
+        };
+      });
+  }, [filteredEvents]);
+
+  const participationHeatmapData = useMemo(() => {
+    const dayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const departmentTotals = new Map();
+
+    filteredEvents.forEach((event) => {
+      const department = event.department || "Unknown";
+      departmentTotals.set(department, (departmentTotals.get(department) || 0) + Number(event.total_students || 0));
+    });
+
+    const topDepartments = Array.from(departmentTotals.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([department]) => department);
+
+    const heatmap = topDepartments.map((department) => {
+      const dayBuckets = new Array(7).fill(0);
+
+      filteredEvents.forEach((event) => {
+        if ((event.department || "Unknown") !== department) {
+          return;
+        }
+
+        const eventDate = event?.date ? new Date(event.date) : null;
+        if (!eventDate || Number.isNaN(eventDate.getTime())) {
+          return;
+        }
+
+        dayBuckets[eventDate.getDay()] += Number(event.total_students || 0);
+      });
+
+      const max = Math.max(...dayBuckets, 1);
+      return {
+        department,
+        cells: dayBuckets.map((value, dayIndex) => ({
+          day: dayLabels[dayIndex],
+          value,
+          intensity: value / max,
+        })),
+      };
+    });
+
+    return heatmap;
+  }, [filteredEvents]);
+
+  const smartInsights = useMemo(() => {
+    const bestDepartment = departmentDistributionData[0]?.department || "N/A";
+    const lowEngagementCount = filteredEvents.filter((event) => Number(event.total_students || 0) < 30).length;
+
+    return {
+      bestDepartment,
+      lowEngagementCount,
+    };
+  }, [departmentDistributionData, filteredEvents]);
+
   const handleGenerateInsights = async () => {
     setInsightLoading(true);
     console.log("[AI] Generating insights...");
@@ -622,6 +699,78 @@ export default function DashboardPage() {
                     description="Create events to start comparing attendance"
                   />
                 )}
+              </GlassCard>
+            </section>
+
+            <section className="mt-8 grid gap-6 lg:grid-cols-5">
+              <GlassCard className="lg:col-span-2 p-6">
+                <div className="mb-5">
+                  <h2 className="text-xl font-bold text-white">Event Status Timeline</h2>
+                  <p className="text-sm text-slate-300 mt-1">Latest lifecycle signals: created, updated, completed.</p>
+                </div>
+
+                {statusTimelineData.length > 0 ? (
+                  <div className="space-y-4">
+                    {statusTimelineData.map((item) => (
+                      <div key={item.id} className="relative pl-6">
+                        <div className="absolute left-0 top-1 h-3 w-3 rounded-full bg-cyan-300" />
+                        <div className="absolute left-[5px] top-5 h-[calc(100%-4px)] w-px bg-white/20" />
+                        <p className="text-sm font-semibold text-white">{item.title}</p>
+                        <p className="text-xs uppercase tracking-[0.2em] text-cyan-200 mt-1">{item.stage}</p>
+                        <p className="text-xs text-slate-400 mt-1">
+                          {item.department} • {item.date ? new Date(item.date).toLocaleDateString() : "No date"}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <EmptyState title="No timeline data" icon="🕒" />
+                )}
+              </GlassCard>
+
+              <GlassCard className="lg:col-span-3 p-6">
+                <div className="mb-5">
+                  <h2 className="text-xl font-bold text-white">Participation Heatmap</h2>
+                  <p className="text-sm text-slate-300 mt-1">Visual activity grid by day and top departments.</p>
+                </div>
+
+                {participationHeatmapData.length > 0 ? (
+                  <div className="space-y-4">
+                    {participationHeatmapData.map((row) => (
+                      <div key={row.department} className="grid grid-cols-[120px_1fr] items-center gap-3">
+                        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-300">{row.department}</p>
+                        <div className="grid grid-cols-7 gap-2">
+                          {row.cells.map((cell) => (
+                            <div
+                              key={`${row.department}-${cell.day}`}
+                              title={`${row.department} ${cell.day}: ${cell.value}`}
+                              className="h-8 rounded-md border border-white/20"
+                              style={{
+                                backgroundColor: `rgba(34, 211, 238, ${0.12 + cell.intensity * 0.75})`,
+                              }}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <EmptyState title="No heatmap data" icon="🔥" />
+                )}
+              </GlassCard>
+            </section>
+
+            <section className="mt-8 grid gap-5 md:grid-cols-2">
+              <GlassCard className="p-6">
+                <p className="text-xs uppercase tracking-[0.2em] text-cyan-200">Smart Insight</p>
+                <h3 className="mt-2 text-2xl font-bold text-white">Best performing department</h3>
+                <p className="mt-2 text-lg text-cyan-100">{smartInsights.bestDepartment}</p>
+              </GlassCard>
+
+              <GlassCard className="p-6">
+                <p className="text-xs uppercase tracking-[0.2em] text-amber-200">Engagement Alert</p>
+                <h3 className="mt-2 text-2xl font-bold text-white">Low engagement events</h3>
+                <p className="mt-2 text-lg text-amber-100">{smartInsights.lowEngagementCount} events under 30 participants</p>
               </GlassCard>
             </section>
           </>

@@ -1,33 +1,28 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
 import { Toaster, toast } from "react-hot-toast";
 import { io } from "socket.io-client";
 
+const PUBLIC_ROUTES = ["/login", "/register"];
+
 export default function AppLayout({ children }) {
   const router = useRouter();
   const pathname = usePathname();
-  const [isReady, setIsReady] = useState(false);
-  const publicRoutes = ["/login", "/register"];
+  const isAuthPage = PUBLIC_ROUTES.includes(pathname);
+  const hasToken = typeof window !== "undefined" ? Boolean(localStorage.getItem("token")) : false;
 
-  // Redirect to login if not authenticated (except on login/signup pages)
   useEffect(() => {
-    const isAuthPage = publicRoutes.includes(pathname);
-    const token = localStorage.getItem("token");
-
-    if (!token && !isAuthPage) {
+    if (!isAuthPage && !hasToken) {
       router.replace("/login");
-      return;
     }
-
-    setIsReady(true);
-  }, [router, pathname]);
+  }, [hasToken, isAuthPage, router]);
 
   useEffect(() => {
-    if (publicRoutes.includes(pathname)) {
+    if (isAuthPage) {
       return undefined;
     }
 
@@ -101,12 +96,10 @@ export default function AppLayout({ children }) {
     return () => {
       socket.disconnect();
     };
-  }, [pathname]);
+  }, [isAuthPage]);
 
   // Don't render sidebar/header on login page
-  const isAuthPage = publicRoutes.includes(pathname);
-
-  if (!isReady && !isAuthPage) {
+  if (!isAuthPage && !hasToken) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-slate-950">
         <div className="text-slate-300">Loading...</div>
@@ -122,7 +115,7 @@ export default function AppLayout({ children }) {
         <main>{children}</main>
       ) : (
         // App layout with sidebar
-        <div className="flex h-screen bg-slate-950 overflow-hidden">
+        <div className="flex h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-800 overflow-hidden">
           {/* Sidebar */}
           <Sidebar />
 

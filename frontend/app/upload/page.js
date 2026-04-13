@@ -124,6 +124,7 @@ export default function UploadPage() {
       toast.success("Upload successful! ✨");
       setFile(null);
       setProgress(100);
+      window.location.reload();
     } catch (apiError) {
       if (apiError?.response?.status === 401 || apiError?.response?.status === 403) {
         localStorage.removeItem("token");
@@ -144,7 +145,7 @@ export default function UploadPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-800 text-slate-100">
       <main className="px-4 py-8 sm:px-6 lg:px-8 max-w-7xl mx-auto flex items-center justify-center min-h-[calc(100vh-200px)]">
         <GlassCard className="w-full max-w-2xl p-8">
           <div className="flex items-start gap-4 mb-6">

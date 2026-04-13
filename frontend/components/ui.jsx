@@ -26,8 +26,8 @@ export function CardSkeleton() {
 export function GlassCard({ children, className = "", hoverable = true }) {
   return (
     <div
-      className={`rounded-2xl border border-white/10 bg-slate-800/50 backdrop-blur-sm shadow-lg ${
-        hoverable ? "hover:border-white/20 hover:bg-slate-800/60 transition-all duration-300 hover:shadow-xl" : ""
+      className={`rounded-2xl border border-white/20 bg-white/10 backdrop-blur-lg shadow-xl ${
+        hoverable ? "hover:border-white/30 hover:bg-white/15 transition-all duration-300 hover:-translate-y-0.5" : ""
       } ${className}`}
     >
       {children}

@@ -3,21 +3,48 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import API from "@/lib/api";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/events", label: "Events" },
   { href: "/upload", label: "Upload" },
   { href: "/predictions", label: "Predictions" },
+  { href: "/notifications", label: "Notifications" },
 ];
 
 export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
-  const [role, setRole] = useState("user");
+  const [unreadCount, setUnreadCount] = useState(0);
+  const role = typeof window !== "undefined" ? localStorage.getItem("role") || "user" : "user";
 
   useEffect(() => {
-    setRole(localStorage.getItem("role") || "user");
+    let mounted = true;
+
+    const loadNotifications = async () => {
+      try {
+        const response = await API.get("/notifications");
+        if (!mounted) {
+          return;
+        }
+
+        const unread = (response.data || []).filter((item) => !item.is_read).length;
+        setUnreadCount(unread);
+      } catch {
+        if (mounted) {
+          setUnreadCount(0);
+        }
+      }
+    };
+
+    loadNotifications();
+    const timer = setInterval(loadNotifications, 30000);
+
+    return () => {
+      mounted = false;
+      clearInterval(timer);
+    };
   }, [pathname]);
 
   const handleLogout = () => {
@@ -63,6 +90,11 @@ export default function Navbar() {
                 }`}
               >
                 {item.label}
+                {item.href === "/notifications" && unreadCount > 0 ? (
+                  <span className="ml-2 rounded-full bg-rose-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                    {unreadCount > 99 ? "99+" : unreadCount}
+                  </span>
+                ) : null}
               </Link>
             );
           })}

@@ -175,6 +175,7 @@ export default function EventsPage() {
       toast.success("Event updated successfully!");
       closeEditModal();
       await loadEvents();
+      window.location.reload();
     } catch (apiError) {
       const errorMsg =
         apiError?.response?.data?.message ||
@@ -187,7 +188,7 @@ export default function EventsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-800 text-slate-100">
       <main className="px-4 py-8 sm:px-6 lg:px-8 max-w-7xl mx-auto">
         {/* Header with Add Event Button */}
         <div className="flex items-center justify-between mb-8">
@@ -198,7 +199,7 @@ export default function EventsPage() {
           {role === "admin" && (
             <button
               onClick={() => setShowForm(true)}
-              className="inline-flex items-center gap-2 rounded bg-blue-500 px-4 py-2 font-semibold text-white transition hover:bg-blue-600"
+              className="inline-flex items-center gap-2 rounded-xl bg-cyan-400 px-5 py-2.5 font-semibold text-slate-950 shadow-lg transition hover:scale-105 hover:bg-cyan-300"
             >
               <Plus size={20} /> Add Event
             </button>
@@ -381,7 +382,7 @@ export default function EventsPage() {
                     <div className="mt-4 grid grid-cols-2 gap-3">
                       <button
                         onClick={() => openEditModal(event)}
-                        className="w-full rounded bg-blue-500 px-3 py-2 text-sm font-semibold text-white transition hover:bg-blue-600 flex items-center justify-center gap-2"
+                        className="w-full rounded-xl bg-cyan-400 px-3 py-2 text-sm font-semibold text-slate-950 shadow-lg transition hover:scale-105 hover:bg-cyan-300 flex items-center justify-center gap-2"
                       >
                         <Pencil size={14} /> Edit
                       </button>

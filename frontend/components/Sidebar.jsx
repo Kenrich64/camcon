@@ -7,26 +7,54 @@ import {
   Calendar,
   TrendingUp,
   Upload,
+  Bell,
   Menu,
   X,
   LogOut,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import API from "@/lib/api";
 
 const sidebarItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/events", label: "Events", icon: Calendar },
   { href: "/predictions", label: "Predictions", icon: TrendingUp },
+  { href: "/notifications", label: "Notifications", icon: Bell },
 ];
 
 export default function Sidebar({ className = "" }) {
   const pathname = usePathname();
-  const [role, setRole] = useState("user");
   const [open, setOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const role = typeof window !== "undefined" ? localStorage.getItem("role") || "user" : "user";
 
   useEffect(() => {
-    setRole(localStorage.getItem("role") || "user");
-  }, []);
+    let mounted = true;
+
+    const loadNotifications = async () => {
+      try {
+        const response = await API.get("/notifications");
+        if (!mounted) {
+          return;
+        }
+
+        const unread = (response.data || []).filter((notification) => !notification.is_read).length;
+        setUnreadCount(unread);
+      } catch {
+        if (mounted) {
+          setUnreadCount(0);
+        }
+      }
+    };
+
+    loadNotifications();
+    const timer = setInterval(loadNotifications, 30000);
+
+    return () => {
+      mounted = false;
+      clearInterval(timer);
+    };
+  }, [pathname]);
 
   const items = [
     ...sidebarItems,
@@ -95,6 +123,11 @@ export default function Sidebar({ className = "" }) {
               >
                 <Icon size={20} />
                 <span className="text-sm font-medium">{item.label}</span>
+                {item.href === "/notifications" && unreadCount > 0 ? (
+                  <span className="ml-auto rounded-full bg-rose-500 px-2 py-0.5 text-[11px] font-bold text-white">
+                    {unreadCount > 99 ? "99+" : unreadCount}
+                  </span>
+                ) : null}
                 {isActive && (
                   <div className="ml-auto h-2 w-2 rounded-full bg-cyan-400" />
                 )}
