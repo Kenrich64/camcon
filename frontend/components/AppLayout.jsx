@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
@@ -8,12 +8,36 @@ import { Toaster, toast } from "react-hot-toast";
 import { io } from "socket.io-client";
 
 const PUBLIC_ROUTES = ["/login", "/register"];
+const THEME_STORAGE_KEY = "camcon_theme";
 
 export default function AppLayout({ children }) {
   const router = useRouter();
   const pathname = usePathname();
+  const [theme, setTheme] = useState(() => {
+    if (typeof window === "undefined") {
+      return "light";
+    }
+
+    const saved = localStorage.getItem(THEME_STORAGE_KEY);
+    if (saved === "dark" || saved === "light") {
+      return saved;
+    }
+
+    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  });
   const isAuthPage = PUBLIC_ROUTES.includes(pathname);
   const hasToken = typeof window !== "undefined" ? Boolean(localStorage.getItem("token")) : false;
+
+  useEffect(() => {
+    const root = document.documentElement;
+    const isDark = theme === "dark";
+    root.classList.toggle("dark", isDark);
+    localStorage.setItem(THEME_STORAGE_KEY, theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme((current) => (current === "dark" ? "light" : "dark"));
+  };
 
   useEffect(() => {
     if (!isAuthPage && !hasToken) {
@@ -101,8 +125,8 @@ export default function AppLayout({ children }) {
   // Don't render sidebar/header on login page
   if (!isAuthPage && !hasToken) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-50">
-        <div className="text-slate-600">Loading...</div>
+      <div className="flex min-h-screen items-center justify-center bg-slate-100 text-slate-600 dark:bg-[#0B1220] dark:text-slate-300">
+        <div>Loading...</div>
       </div>
     );
   }
@@ -115,14 +139,14 @@ export default function AppLayout({ children }) {
         <main>{children}</main>
       ) : (
         // App layout with sidebar
-        <div className="flex h-screen overflow-hidden bg-slate-50">
+        <div className="flex h-screen overflow-hidden bg-slate-100 dark:bg-[#0B1220]">
           {/* Sidebar */}
           <Sidebar />
 
           {/* Main content */}
           <div className="flex-1 flex flex-col ml-0 md:ml-64 overflow-hidden">
             {/* Header */}
-            <Header />
+            <Header theme={theme} onToggleTheme={toggleTheme} />
 
             {/* Page content */}
             <main className="flex-1 overflow-y-auto">

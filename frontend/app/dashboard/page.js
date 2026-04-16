@@ -381,14 +381,14 @@ export default function DashboardPage() {
   };
 
   if (!overview) {
-    return <p className="px-6 py-8 text-slate-600">Loading dashboard...</p>;
+    return <p className="px-6 py-8 text-slate-600 dark:text-slate-400">Loading dashboard...</p>;
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
+    <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-[#0B1220] dark:text-slate-100">
       <main ref={reportRef} className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {error ? (
-          <div className="mb-6 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+          <div className="mb-6 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300">
             {error}
           </div>
         ) : null}
@@ -412,12 +412,12 @@ export default function DashboardPage() {
               <GlassCard className="p-5 sm:p-6" hoverable={false}>
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-start gap-3">
-                      <div className="rounded-xl bg-blue-50 p-2.5 text-blue-600">
+                      <div className="rounded-xl bg-blue-50 p-2.5 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400">
                         <Bot size={20} />
                       </div>
                       <div>
-                        <h2 className="heading-display text-lg font-semibold text-slate-900">AI Campus Insights</h2>
-                        <p className="mt-1 text-sm text-slate-500">
+                        <h2 className="heading-display text-lg font-semibold text-slate-900 dark:text-slate-100">AI Campus Insights</h2>
+                        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                           Generate analysis from your live event analytics.
                         </p>
                       </div>
@@ -454,19 +454,19 @@ export default function DashboardPage() {
                     </div>
                   </div>
 
-                  <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                  <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-700/50">
                     {insightLoading ? (
                       <div className="space-y-2">
-                        <div className="h-4 w-2/3 animate-pulse rounded bg-slate-200" />
-                        <div className="h-4 w-full animate-pulse rounded bg-slate-200" />
-                        <div className="h-4 w-5/6 animate-pulse rounded bg-slate-200" />
+                        <div className="h-4 w-2/3 animate-pulse rounded bg-slate-200 dark:bg-slate-600" />
+                        <div className="h-4 w-full animate-pulse rounded bg-slate-200 dark:bg-slate-600" />
+                        <div className="h-4 w-5/6 animate-pulse rounded bg-slate-200 dark:bg-slate-600" />
                       </div>
                     ) : typedInsight ? (
-                      <pre className="whitespace-pre-wrap break-words font-sans text-sm leading-6 text-slate-700">
+                      <pre className="whitespace-pre-wrap break-words font-sans text-sm leading-6 text-slate-700 dark:text-slate-300">
                         {typedInsight}
                       </pre>
                     ) : (
-                      <p className="text-sm text-slate-500">
+                      <p className="text-sm text-slate-500 dark:text-slate-400">
                         No AI insight yet. Click Generate AI Insights to analyze this dashboard.
                       </p>
                     )}
@@ -477,13 +477,13 @@ export default function DashboardPage() {
             <section className="mb-8">
               <GlassCard className="p-6">
                 <div className="mb-4 flex items-center justify-between">
-                  <h2 className="heading-display text-xl font-bold text-slate-900">Recent Notifications</h2>
-                  <p className="text-sm text-slate-500">
+                  <h2 className="heading-display text-xl font-bold text-slate-900 dark:text-slate-100">Recent Notifications</h2>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">
                     {(notifications || []).filter((item) => !item.is_read).length} unread
                   </p>
                 </div>
                 {(notifications || []).slice(0, 5).length === 0 ? (
-                  <p className="text-sm text-slate-500">No notifications available.</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">No notifications available.</p>
                 ) : (
                   <div className="space-y-3">
                     {(notifications || []).slice(0, 5).map((item) => (
@@ -495,15 +495,15 @@ export default function DashboardPage() {
                             markNotificationAsRead(item.id);
                           }
                         }}
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-left transition hover:bg-slate-100"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-left transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-700/40 dark:hover:bg-slate-700"
                       >
                         <div className="mb-1 flex items-center justify-between gap-3">
-                          <p className="text-sm font-semibold text-slate-900">{item.title || "Update"}</p>
+                          <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{item.title || "Update"}</p>
                           {!item.is_read ? (
                             <span className="rounded-full bg-blue-500 px-2 py-0.5 text-[10px] font-semibold text-white">New</span>
                           ) : null}
                         </div>
-                        <p className="text-xs text-slate-600">{item.message}</p>
+                        <p className="text-xs text-slate-600 dark:text-slate-300">{item.message}</p>
                       </button>
                     ))}
                   </div>
@@ -523,7 +523,7 @@ export default function DashboardPage() {
                 label="Total Participants"
                 value={overview.totalParticipation}
                 icon="👥"
-                accent="border-slate-200 bg-white"
+                accent="border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800"
               />
               <StatCard
                 label="Avg Feedback Score"
@@ -538,15 +538,15 @@ export default function DashboardPage() {
               <GlassCard className="lg:col-span-5 p-4 sm:p-5">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
-                    <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-700">Chart Filters</h3>
-                    <p className="text-xs text-slate-500">Refine charts by time window and department</p>
+                    <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-700 dark:text-slate-300">Chart Filters</h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">Refine charts by time window and department</p>
                   </div>
 
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                     <select
                       value={timeRange}
                       onChange={(event) => setTimeRange(event.target.value)}
-                      className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700"
+                      className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200"
                     >
                       <option value="30">Last 30 days</option>
                       <option value="90">Last 90 days</option>
@@ -557,7 +557,7 @@ export default function DashboardPage() {
                     <select
                       value={selectedDepartment}
                       onChange={(event) => setSelectedDepartment(event.target.value)}
-                      className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700"
+                      className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200"
                     >
                       <option value="all">All departments</option>
                       {departmentOptions.map((department) => (
@@ -573,8 +573,8 @@ export default function DashboardPage() {
               {/* Trend Chart */}
               <GlassCard className="lg:col-span-3 p-6">
                 <div className="mb-5">
-                  <h2 className="heading-display text-xl font-bold text-slate-900">Participation Trend</h2>
-                  <p className="mt-1 text-sm text-slate-500">Attendance over time for selected filters</p>
+                  <h2 className="heading-display text-xl font-bold text-slate-900 dark:text-slate-100">Participation Trend</h2>
+                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Attendance over time for selected filters</p>
                 </div>
                 <div className="h-80">
                   {participationTrendData.length > 0 ? (
@@ -612,8 +612,8 @@ export default function DashboardPage() {
               {/* Department Pie */}
               <GlassCard className="lg:col-span-2 p-6">
                 <div className="mb-5">
-                  <h2 className="heading-display text-xl font-bold text-slate-900">Department Distribution</h2>
-                  <p className="mt-1 text-sm text-slate-500">Attendance split by department</p>
+                  <h2 className="heading-display text-xl font-bold text-slate-900 dark:text-slate-100">Department Distribution</h2>
+                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Attendance split by department</p>
                 </div>
                 <div className="h-80">
                   {departmentDistributionData.length > 0 ? (
@@ -664,8 +664,8 @@ export default function DashboardPage() {
             <section>
               <GlassCard className="p-6">
                 <div className="mb-6">
-                  <h2 className="heading-display text-xl font-bold text-slate-900">Event Attendance Comparison</h2>
-                  <p className="mt-1 text-sm text-slate-500">Top events by attendance for selected filters</p>
+                  <h2 className="heading-display text-xl font-bold text-slate-900 dark:text-slate-100">Event Attendance Comparison</h2>
+                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Top events by attendance for selected filters</p>
                 </div>
 
                 {attendanceComparisonData.length > 0 ? (
@@ -715,8 +715,8 @@ export default function DashboardPage() {
             <section className="mt-8 grid gap-6 lg:grid-cols-5">
               <GlassCard className="lg:col-span-2 p-6">
                 <div className="mb-5">
-                  <h2 className="heading-display text-xl font-bold text-slate-900">Event Status Timeline</h2>
-                  <p className="mt-1 text-sm text-slate-500">Latest lifecycle signals: created, updated, completed.</p>
+                  <h2 className="heading-display text-xl font-bold text-slate-900 dark:text-slate-100">Event Status Timeline</h2>
+                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Latest lifecycle signals: created, updated, completed.</p>
                 </div>
 
                 {statusTimelineData.length > 0 ? (
@@ -724,10 +724,10 @@ export default function DashboardPage() {
                     {statusTimelineData.map((item) => (
                       <div key={item.id} className="relative pl-6">
                         <div className="absolute left-0 top-1 h-3 w-3 rounded-full bg-blue-500" />
-                        <div className="absolute left-[5px] top-5 h-[calc(100%-4px)] w-px bg-slate-200" />
-                        <p className="text-sm font-semibold text-slate-900">{item.title}</p>
-                        <p className="mt-1 text-xs uppercase tracking-[0.2em] text-slate-500">{item.stage}</p>
-                        <p className="mt-1 text-xs text-slate-500">
+                        <div className="absolute left-[5px] top-5 h-[calc(100%-4px)] w-px bg-slate-200 dark:bg-slate-700" />
+                        <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{item.title}</p>
+                        <p className="mt-1 text-xs uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">{item.stage}</p>
+                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                           {item.department} • {item.date ? new Date(item.date).toLocaleDateString() : "No date"}
                         </p>
                       </div>
@@ -740,15 +740,15 @@ export default function DashboardPage() {
 
               <GlassCard className="lg:col-span-3 p-6">
                 <div className="mb-5">
-                  <h2 className="heading-display text-xl font-bold text-slate-900">Participation Heatmap</h2>
-                  <p className="mt-1 text-sm text-slate-500">Visual activity grid by day and top departments.</p>
+                  <h2 className="heading-display text-xl font-bold text-slate-900 dark:text-slate-100">Participation Heatmap</h2>
+                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Visual activity grid by day and top departments.</p>
                 </div>
 
                 {participationHeatmapData.length > 0 ? (
                   <div className="space-y-4">
                     {participationHeatmapData.map((row) => (
                       <div key={row.department} className="grid grid-cols-[120px_1fr] items-center gap-3">
-                        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">{row.department}</p>
+                        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">{row.department}</p>
                         <div className="grid grid-cols-7 gap-2">
                           {row.cells.map((cell) => (
                             <div
@@ -772,15 +772,15 @@ export default function DashboardPage() {
 
             <section className="mt-8 grid gap-5 md:grid-cols-2">
               <GlassCard className="p-6">
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Smart Insight</p>
-                <h3 className="heading-display mt-2 text-2xl font-bold text-slate-900">Best performing department</h3>
-                <p className="mt-2 text-lg text-slate-700">{smartInsights.bestDepartment}</p>
+                <p className="text-xs uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Smart Insight</p>
+                <h3 className="heading-display mt-2 text-2xl font-bold text-slate-900 dark:text-slate-100">Best performing department</h3>
+                <p className="mt-2 text-lg text-slate-700 dark:text-slate-300">{smartInsights.bestDepartment}</p>
               </GlassCard>
 
               <GlassCard className="p-6">
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Engagement Alert</p>
-                <h3 className="heading-display mt-2 text-2xl font-bold text-slate-900">Low engagement events</h3>
-                <p className="mt-2 text-lg text-slate-700">{smartInsights.lowEngagementCount} events under 30 participants</p>
+                <p className="text-xs uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Engagement Alert</p>
+                <h3 className="heading-display mt-2 text-2xl font-bold text-slate-900 dark:text-slate-100">Low engagement events</h3>
+                <p className="mt-2 text-lg text-slate-700 dark:text-slate-300">{smartInsights.lowEngagementCount} events under 30 participants</p>
               </GlassCard>
             </section>
           </>
@@ -802,10 +802,10 @@ function ChartPanelSkeleton({ className = "" }) {
   return (
     <GlassCard className={`p-6 ${className}`} hoverable={false}>
       <div className="mb-6 space-y-2">
-        <div className="h-6 w-56 animate-pulse rounded bg-slate-200" />
-        <div className="h-4 w-36 animate-pulse rounded bg-slate-100" />
+        <div className="h-6 w-56 animate-pulse rounded bg-slate-200 dark:bg-slate-600" />
+        <div className="h-4 w-36 animate-pulse rounded bg-slate-100 dark:bg-slate-700" />
       </div>
-      <div className="h-72 animate-pulse rounded-xl bg-slate-100" />
+      <div className="h-72 animate-pulse rounded-xl bg-slate-100 dark:bg-slate-700" />
     </GlassCard>
   );
 }
