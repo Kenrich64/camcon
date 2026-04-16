@@ -44,92 +44,75 @@ export default function LoginPage() {
 
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-10">
-      <div className="mx-auto flex min-h-[88vh] w-full max-w-5xl items-center justify-center">
-        <div className="grid w-full gap-8 md:grid-cols-2">
-          <section className="hidden rounded-3xl bg-[#1E293B] p-10 text-slate-100 md:block">
-            <p className="text-xs uppercase tracking-[0.25em] text-blue-200">Campus Event Operations</p>
-            <h1 className="heading-display mt-4 text-4xl font-bold leading-tight">Camcon Dashboard</h1>
-            <p className="mt-4 text-sm text-slate-300">
-              Manage events, monitor participation, and track performance with a focused interface built for daily operations.
+      <div className="mx-auto flex min-h-[88vh] w-full max-w-md items-center justify-center">
+        <section className="surface-card w-full p-8 sm:p-10">
+          <div className="mb-8">
+            <p className="text-xs uppercase tracking-[0.25em] text-slate-500">Campus Event Operations</p>
+            <h1 className="heading-display mt-3 text-3xl font-bold text-slate-900">Sign in to Camcon</h1>
+            <p className="mt-2 text-sm text-slate-500">
+              Access your dashboard, notifications, and uploaded analytics.
             </p>
-            <div className="mt-8 space-y-3 text-sm text-slate-200">
-              <p>Live analytics by department and timeline</p>
-              <p>Role-based access for admins and users</p>
-              <p>Notifications for event and data updates</p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div>
+              <label className="mb-2 block text-sm font-medium text-slate-700">
+                Email Address
+              </label>
+              <input
+                name="email"
+                type="email"
+                value={form.email}
+                onChange={handleChange}
+                placeholder="you@example.com"
+                required
+                className="input-field"
+              />
             </div>
-          </section>
 
-          <section className="surface-card mx-auto w-full max-w-md p-8">
-            <h2 className="heading-display mb-2 text-2xl font-bold text-slate-900">Sign In</h2>
-            <p className="mb-8 text-sm text-slate-500">Access your Camcon workspace</p>
+            <div>
+              <label className="mb-2 block text-sm font-medium text-slate-700">
+                Password
+              </label>
+              <input
+                name="password"
+                type="password"
+                value={form.password}
+                onChange={handleChange}
+                placeholder="••••••••"
+                required
+                className="input-field"
+              />
+            </div>
 
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <div>
-                <label className="mb-2 block text-sm font-medium text-slate-700">
-                  Email Address
-                </label>
-                <input
-                  name="email"
-                  type="email"
-                  value={form.email}
-                  onChange={handleChange}
-                  placeholder="you@example.com"
-                  required
-                  className="input-field"
-                />
+            {error && (
+              <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                {error}
               </div>
+            )}
 
-              <div>
-                <label className="mb-2 block text-sm font-medium text-slate-700">
-                  Password
-                </label>
-                <input
-                  name="password"
-                  type="password"
-                  value={form.password}
-                  onChange={handleChange}
-                  placeholder="••••••••"
-                  required
-                  className="input-field"
-                />
-              </div>
-
-              {error && (
-                <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-                  {error}
-                </div>
+            <button type="submit" disabled={loading} className="btn-primary w-full">
+              {loading ? (
+                <>
+                  <Loader size={18} className="animate-spin" />
+                  Signing in...
+                </>
+              ) : (
+                "Sign In"
               )}
+            </button>
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="btn-primary w-full"
-              >
-                {loading ? (
-                  <>
-                    <Loader size={18} className="animate-spin" />
-                    Signing in...
-                  </>
-                ) : (
-                  "Sign In"
-                )}
+            <Link href="/register" className="block">
+              <button type="button" className="btn-secondary w-full">
+                Register
               </button>
+            </Link>
+          </form>
 
-              <Link href="/register" className="block">
-                <button
-                  type="button"
-                  className="btn-secondary w-full"
-                >
-                  Register
-                </button>
-              </Link>
-            </form>
-
-            <p className="mt-6 text-center text-xs text-slate-500">
-              Use your registered email and password.
-            </p>
-          </section>
-        </div>
+          <p className="mt-6 text-center text-xs text-slate-500">
+            Use your registered email and password.
+          </p>
+        </section>
       </div>
     </main>
   );

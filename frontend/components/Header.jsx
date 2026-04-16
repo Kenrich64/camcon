@@ -2,7 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Bell, Sparkles } from "lucide-react";
+import { Bell } from "lucide-react";
 import API from "@/lib/api";
 
 const pageConfig = {
@@ -93,8 +93,8 @@ export default function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/95 backdrop-blur">
-      <div className="px-6 py-5">
+    <header className="sticky top-0 z-20 border-b border-slate-200 bg-white">
+      <div className="px-4 py-4 sm:px-6 lg:px-8">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <p className="mb-2 text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
@@ -169,11 +169,6 @@ export default function Header() {
               >
                 {role.toUpperCase()}
               </span>
-            </div>
-
-            <div className="hidden items-center gap-2 rounded-xl border border-blue-100 bg-blue-50 px-3 py-2 lg:flex">
-              <Sparkles size={14} className="text-blue-600" />
-              <p className="text-xs font-semibold text-blue-700">Professional workspace</p>
             </div>
           </div>
         </div>

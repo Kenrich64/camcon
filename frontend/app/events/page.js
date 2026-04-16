@@ -17,11 +17,11 @@ const initialForm = {
 };
 
 const STATUS_COLORS = {
-  scheduled: "bg-blue-500/20 text-blue-300 border-blue-500/30",
-  ongoing: "bg-purple-500/20 text-purple-300 border-purple-500/30",
-  completed: "bg-green-500/20 text-green-300 border-green-500/30",
-  postponed: "bg-amber-500/20 text-amber-300 border-amber-500/30",
-  cancelled: "bg-rose-500/20 text-rose-300 border-rose-500/30",
+  scheduled: "bg-blue-50 text-blue-700 border-blue-200",
+  ongoing: "bg-indigo-50 text-indigo-700 border-indigo-200",
+  completed: "bg-green-50 text-green-700 border-green-200",
+  postponed: "bg-amber-50 text-amber-700 border-amber-200",
+  cancelled: "bg-rose-50 text-rose-700 border-rose-200",
 };
 
 const initialEditForm = {
@@ -188,18 +188,18 @@ export default function EventsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-800 text-slate-100">
-      <main className="px-4 py-8 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+    <div className="min-h-screen bg-slate-50 text-slate-900">
+      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Header with Add Event Button */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-white">Events</h1>
-            <p className="text-slate-400 text-sm mt-2">Manage and track campus events</p>
+            <h1 className="heading-display text-3xl font-bold text-slate-900">Events</h1>
+            <p className="mt-2 text-sm text-slate-500">Manage and track campus events</p>
           </div>
           {role === "admin" && (
             <button
               onClick={() => setShowForm(true)}
-              className="inline-flex items-center gap-2 rounded-xl bg-cyan-400 px-5 py-2.5 font-semibold text-slate-950 shadow-lg transition hover:scale-105 hover:bg-cyan-300"
+              className="btn-primary"
             >
               <Plus size={20} /> Add Event
             </button>
@@ -207,14 +207,14 @@ export default function EventsPage() {
         </div>
 
         {error && (
-          <div className="mb-6 rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
+          <div className="mb-6 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
             {error}
           </div>
         )}
 
         {showForm && role === "admin" && (
           <GlassCard className="mb-8 p-6" hoverable={false}>
-            <h2 className="text-xl font-bold text-white mb-6">Create New Event</h2>
+            <h2 className="heading-display mb-6 text-xl font-bold text-slate-900">Create New Event</h2>
             <form onSubmit={handleSubmit} className="grid gap-4 sm:grid-cols-2">
               <Field label="Title" name="title" value={form.title} onChange={handleChange} required />
               <Field label="Department" name="department" value={form.department} onChange={handleChange} required />
@@ -230,7 +230,7 @@ export default function EventsPage() {
                 required
               />
               <label className="block">
-                <span className="mb-2 block text-sm font-medium text-slate-300">Status</span>
+                <span className="mb-2 block text-sm font-medium text-slate-700">Status</span>
                 <select
                   name="status"
                   value={form.status}
@@ -265,9 +265,9 @@ export default function EventsPage() {
         )}
 
         {showEditModal && role === "admin" && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 px-4">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/20 px-4 backdrop-blur-sm">
             <GlassCard className="w-full max-w-lg p-6" hoverable={false}>
-              <h2 className="text-xl font-bold text-white mb-5">Edit Event</h2>
+              <h2 className="heading-display mb-5 text-xl font-bold text-slate-900">Edit Event</h2>
               <form onSubmit={handleEditSubmit} className="space-y-4">
                 <Field
                   label="Department"
@@ -292,7 +292,7 @@ export default function EventsPage() {
                   required
                 />
                 <label className="block">
-                  <span className="mb-2 block text-sm font-medium text-slate-300">Status</span>
+                  <span className="mb-2 block text-sm font-medium text-slate-700">Status</span>
                   <select
                     name="status"
                     value={editForm.status}
@@ -327,11 +327,11 @@ export default function EventsPage() {
             </div>
           ) : events.length === 0 ? (
             <GlassCard>
-              <EmptyState
-                icon="📅"
-                title="No events yet"
-                description="Create your first event to get started"
-                action={
+                <EmptyState
+                  icon="📅"
+                  title="No events yet"
+                  description="Create your first event to get started"
+                  action={
                   role === "admin" && (
                     <button
                       onClick={() => setShowForm(true)}
@@ -347,33 +347,33 @@ export default function EventsPage() {
             <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
               {events.map((event) => (
                 <GlassCard key={event.id} className="p-6 flex flex-col" hoverable>
-                  <div className="flex items-start justify-between gap-4 mb-4">
+                    <div className="mb-4 flex items-start justify-between gap-4">
                     <div>
-                      <p className="text-xs uppercase tracking-widest text-cyan-400 font-semibold mb-2">
+                      <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-blue-600">
                         {event.department}
                       </p>
-                      <h3 className="text-lg font-bold text-white">{event.title}</h3>
+                      <h3 className="text-lg font-bold text-slate-900">{event.title}</h3>
                     </div>
                     <span
                       className={`rounded-full border px-3 py-1 text-xs font-semibold whitespace-nowrap ${
-                        STATUS_COLORS[event.status] || "bg-slate-700/50 text-slate-300 border-slate-600/50"
+                        STATUS_COLORS[event.status] || "bg-slate-100 text-slate-600 border-slate-200"
                       }`}
                     >
                       {event.status}
                     </span>
                   </div>
 
-                  <div className="flex-1 space-y-3 mb-4 text-sm">
-                    <div className="flex items-center gap-2 text-slate-300">
-                      <Calendar size={16} className="text-cyan-400" />
+                    <div className="mb-4 flex-1 space-y-3 text-sm">
+                    <div className="flex items-center gap-2 text-slate-600">
+                      <Calendar size={16} className="text-blue-600" />
                       {event.date ? new Date(event.date).toLocaleDateString() : "-"}
                     </div>
-                    <div className="flex items-center gap-2 text-slate-300">
-                      <MapPin size={16} className="text-cyan-400" />
+                    <div className="flex items-center gap-2 text-slate-600">
+                      <MapPin size={16} className="text-blue-600" />
                       {event.venue}
                     </div>
-                    <div className="flex items-center gap-2 text-slate-300">
-                      <Users size={16} className="text-cyan-400" />
+                    <div className="flex items-center gap-2 text-slate-600">
+                      <Users size={16} className="text-blue-600" />
                       {event.total_students ?? 0} students
                     </div>
                   </div>
@@ -382,7 +382,7 @@ export default function EventsPage() {
                     <div className="mt-4 grid grid-cols-2 gap-3">
                       <button
                         onClick={() => openEditModal(event)}
-                        className="w-full rounded-xl bg-cyan-400 px-3 py-2 text-sm font-semibold text-slate-950 shadow-lg transition hover:scale-105 hover:bg-cyan-300 flex items-center justify-center gap-2"
+                        className="btn-primary w-full"
                       >
                         <Pencil size={14} /> Edit
                       </button>
@@ -407,7 +407,7 @@ export default function EventsPage() {
 function Field({ label, ...props }) {
   return (
     <label className="block">
-      <span className="mb-2 block text-sm font-medium text-slate-300">{label}</span>
+      <span className="mb-2 block text-sm font-medium text-slate-700">{label}</span>
       <input {...props} className="input-field" />
     </label>
   );

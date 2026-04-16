@@ -382,14 +382,14 @@ export default function DashboardPage() {
   };
 
   if (!overview) {
-    return <p className="px-6 py-8 text-slate-300">Loading dashboard...</p>;
+    return <p className="px-6 py-8 text-slate-600">Loading dashboard...</p>;
   }
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
-      <main ref={reportRef} className="px-4 py-8 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+      <main ref={reportRef} className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {error ? (
-          <div className="mb-6 rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
+          <div className="mb-6 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
             {error}
           </div>
         ) : null}
@@ -410,17 +410,16 @@ export default function DashboardPage() {
         ) : (
           <>
             <section className="mb-8">
-              <div className="rounded-xl bg-gradient-to-r from-cyan-500/30 via-blue-500/20 to-indigo-500/30 p-[1px]">
-                <GlassCard className="rounded-xl p-5 sm:p-6">
+              <GlassCard className="p-5 sm:p-6" hoverable={false}>
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-start gap-3">
-                      <div className="rounded-xl bg-cyan-500/20 p-2.5 text-cyan-300">
+                      <div className="rounded-xl bg-blue-50 p-2.5 text-blue-600">
                         <Bot size={20} />
                       </div>
                       <div>
-                        <h2 className="text-lg font-semibold text-white">AI Campus Insights</h2>
-                        <p className="mt-1 text-sm text-slate-400">
-                          Generate expert analysis from your live event analytics.
+                        <h2 className="heading-display text-lg font-semibold text-slate-900">AI Campus Insights</h2>
+                        <p className="mt-1 text-sm text-slate-500">
+                          Generate analysis from your live event analytics.
                         </p>
                       </div>
                     </div>
@@ -430,7 +429,7 @@ export default function DashboardPage() {
                         type="button"
                         onClick={handleDownloadReport}
                         disabled={exportLoading || loading}
-                        className="inline-flex items-center gap-2 rounded-xl border border-cyan-300/30 bg-cyan-400/10 px-4 py-2.5 text-sm font-semibold text-cyan-200 transition-all duration-300 hover:bg-cyan-400/20 disabled:cursor-not-allowed disabled:opacity-60"
+                        className="btn-secondary"
                       >
                         {exportLoading ? "Preparing PDF..." : "Download Report"}
                       </button>
@@ -439,11 +438,11 @@ export default function DashboardPage() {
                         type="button"
                         onClick={handleGenerateInsights}
                         disabled={insightLoading}
-                        className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-cyan-400 to-blue-500 px-4 py-2.5 text-sm font-semibold text-slate-950 transition-all duration-300 hover:scale-[1.02] hover:from-cyan-300 hover:to-blue-400 disabled:cursor-not-allowed disabled:opacity-60"
+                        className="btn-primary"
                       >
                         {insightLoading ? (
                           <>
-                            <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-950/30 border-t-slate-950" />
+                            <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
                             Generating...
                           </>
                         ) : (
@@ -459,9 +458,9 @@ export default function DashboardPage() {
                   <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
                     {insightLoading ? (
                       <div className="space-y-2">
-                        <div className="h-4 w-2/3 animate-pulse rounded bg-slate-700/70" />
-                        <div className="h-4 w-full animate-pulse rounded bg-slate-700/60" />
-                        <div className="h-4 w-5/6 animate-pulse rounded bg-slate-700/60" />
+                        <div className="h-4 w-2/3 animate-pulse rounded bg-slate-200" />
+                        <div className="h-4 w-full animate-pulse rounded bg-slate-200" />
+                        <div className="h-4 w-5/6 animate-pulse rounded bg-slate-200" />
                       </div>
                     ) : typedInsight ? (
                       <pre className="whitespace-pre-wrap break-words font-sans text-sm leading-6 text-slate-700">
@@ -474,19 +473,18 @@ export default function DashboardPage() {
                     )}
                   </div>
                 </GlassCard>
-              </div>
             </section>
 
             <section className="mb-8">
               <GlassCard className="p-6">
                 <div className="mb-4 flex items-center justify-between">
-                  <h2 className="heading-display text-xl font-bold text-white">Recent Notifications</h2>
-                  <p className="text-sm text-slate-300">
+                  <h2 className="heading-display text-xl font-bold text-slate-900">Recent Notifications</h2>
+                  <p className="text-sm text-slate-500">
                     {(notifications || []).filter((item) => !item.is_read).length} unread
                   </p>
                 </div>
                 {(notifications || []).slice(0, 5).length === 0 ? (
-                  <p className="text-sm text-slate-300">No notifications available.</p>
+                  <p className="text-sm text-slate-500">No notifications available.</p>
                 ) : (
                   <div className="space-y-3">
                     {(notifications || []).slice(0, 5).map((item) => (
@@ -498,15 +496,15 @@ export default function DashboardPage() {
                             markNotificationAsRead(item.id);
                           }
                         }}
-                        className="w-full rounded-xl border border-slate-600 bg-slate-700 px-4 py-3 text-left transition hover:bg-slate-600"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-left transition hover:bg-slate-100"
                       >
                         <div className="mb-1 flex items-center justify-between gap-3">
-                          <p className="text-sm font-semibold text-white">{item.title || "Update"}</p>
+                          <p className="text-sm font-semibold text-slate-900">{item.title || "Update"}</p>
                           {!item.is_read ? (
                             <span className="rounded-full bg-blue-500 px-2 py-0.5 text-[10px] font-semibold text-white">New</span>
                           ) : null}
                         </div>
-                        <p className="text-xs text-slate-200">{item.message}</p>
+                        <p className="text-xs text-slate-600">{item.message}</p>
                       </button>
                     ))}
                   </div>
@@ -520,19 +518,19 @@ export default function DashboardPage() {
                 label="Total Events"
                 value={overview.totalEvents}
                 icon="📅"
-                accent="from-cyan-400/25 to-cyan-400/5"
+                accent="border-blue-100 bg-blue-50"
               />
               <StatCard
                 label="Total Participants"
                 value={overview.totalParticipation}
                 icon="👥"
-                accent="from-blue-400/25 to-blue-400/5"
+                accent="border-slate-200 bg-white"
               />
               <StatCard
                 label="Avg Feedback Score"
                 value={Number(overview.averageFeedbackScore || 0).toFixed(2)}
                 icon="⭐"
-                accent="from-purple-400/25 to-purple-400/5"
+                accent="border-blue-100 bg-blue-50"
               />
             </section>
 
@@ -541,15 +539,15 @@ export default function DashboardPage() {
               <GlassCard className="lg:col-span-5 p-4 sm:p-5">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
-                    <h3 className="text-sm font-semibold uppercase tracking-wide text-cyan-300">Chart Filters</h3>
-                    <p className="text-xs text-slate-400">Refine charts by time window and department</p>
+                    <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-700">Chart Filters</h3>
+                    <p className="text-xs text-slate-500">Refine charts by time window and department</p>
                   </div>
 
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                     <select
                       value={timeRange}
                       onChange={(event) => setTimeRange(event.target.value)}
-                      className="rounded-lg border border-white/10 bg-slate-900 px-3 py-2 text-sm text-slate-100"
+                      className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700"
                     >
                       <option value="30">Last 30 days</option>
                       <option value="90">Last 90 days</option>
@@ -560,7 +558,7 @@ export default function DashboardPage() {
                     <select
                       value={selectedDepartment}
                       onChange={(event) => setSelectedDepartment(event.target.value)}
-                      className="rounded-lg border border-white/10 bg-slate-900 px-3 py-2 text-sm text-slate-100"
+                      className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700"
                     >
                       <option value="all">All departments</option>
                       {departmentOptions.map((department) => (
@@ -576,8 +574,8 @@ export default function DashboardPage() {
               {/* Trend Chart */}
               <GlassCard className="lg:col-span-3 p-6">
                 <div className="mb-5">
-                  <h2 className="text-xl font-bold text-white">Participation Trend</h2>
-                  <p className="text-sm text-slate-400 mt-1">Attendance over time for selected filters</p>
+                  <h2 className="heading-display text-xl font-bold text-slate-900">Participation Trend</h2>
+                  <p className="mt-1 text-sm text-slate-500">Attendance over time for selected filters</p>
                 </div>
                 <div className="h-80">
                   {participationTrendData.length > 0 ? (
@@ -593,15 +591,15 @@ export default function DashboardPage() {
                             <stop offset="100%" stopColor="#818cf8" />
                           </linearGradient>
                         </defs>
-                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.15)" />
-                        <XAxis dataKey="month" stroke="#94a3b8" tickLine={false} />
-                        <YAxis stroke="#94a3b8" tickLine={false} />
+                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.18)" />
+                        <XAxis dataKey="month" stroke="#64748b" tickLine={false} />
+                        <YAxis stroke="#64748b" tickLine={false} />
                         <Tooltip
                           contentStyle={{
-                            background: "#0f172a",
-                            border: "1px solid rgba(148,163,184,0.18)",
+                            background: "#ffffff",
+                            border: "1px solid rgba(148,163,184,0.25)",
                             borderRadius: "12px",
-                            color: "#e2e8f0",
+                            color: "#0f172a",
                           }}
                         />
                         <Area
@@ -617,8 +615,8 @@ export default function DashboardPage() {
                           dataKey="totalAttendance"
                           stroke="url(#trendStroke)"
                           strokeWidth={3}
-                          dot={{ r: 3, strokeWidth: 1, fill: "#0f172a" }}
-                          activeDot={{ r: 6, stroke: "#22d3ee", strokeWidth: 2, fill: "#0f172a" }}
+                          dot={{ r: 3, strokeWidth: 1, fill: "#ffffff" }}
+                          activeDot={{ r: 6, stroke: "#3b82f6", strokeWidth: 2, fill: "#ffffff" }}
                           isAnimationActive
                           animationDuration={1200}
                         />
@@ -633,8 +631,8 @@ export default function DashboardPage() {
               {/* Department Pie */}
               <GlassCard className="lg:col-span-2 p-6">
                 <div className="mb-5">
-                  <h2 className="text-xl font-bold text-white">Department Distribution</h2>
-                  <p className="text-sm text-slate-400 mt-1">Attendance split by department</p>
+                  <h2 className="heading-display text-xl font-bold text-slate-900">Department Distribution</h2>
+                  <p className="mt-1 text-sm text-slate-500">Attendance split by department</p>
                 </div>
                 <div className="h-80">
                   {departmentDistributionData.length > 0 ? (
@@ -680,9 +678,10 @@ export default function DashboardPage() {
                         <Legend />
                         <Tooltip
                           contentStyle={{
-                            background: "#0f172a",
-                            border: "1px solid rgba(148,163,184,0.18)",
+                            background: "#ffffff",
+                            border: "1px solid rgba(148,163,184,0.25)",
                             borderRadius: "12px",
+                            color: "#0f172a",
                           }}
                         />
                       </PieChart>
@@ -698,8 +697,8 @@ export default function DashboardPage() {
             <section>
               <GlassCard className="p-6">
                 <div className="mb-6">
-                  <h2 className="text-xl font-bold text-white">Event Attendance Comparison</h2>
-                  <p className="text-sm text-slate-400 mt-1">Top events by attendance for selected filters</p>
+                  <h2 className="heading-display text-xl font-bold text-slate-900">Event Attendance Comparison</h2>
+                  <p className="mt-1 text-sm text-slate-500">Top events by attendance for selected filters</p>
                 </div>
 
                 {attendanceComparisonData.length > 0 ? (
@@ -725,10 +724,10 @@ export default function DashboardPage() {
                         <YAxis stroke="#94a3b8" tickLine={false} />
                         <Tooltip
                           contentStyle={{
-                            background: "#0f172a",
-                            border: "1px solid rgba(148,163,184,0.18)",
+                            background: "#ffffff",
+                            border: "1px solid rgba(148,163,184,0.25)",
                             borderRadius: "12px",
-                            color: "#e2e8f0",
+                            color: "#0f172a",
                           }}
                         />
                         <Bar
@@ -755,19 +754,19 @@ export default function DashboardPage() {
             <section className="mt-8 grid gap-6 lg:grid-cols-5">
               <GlassCard className="lg:col-span-2 p-6">
                 <div className="mb-5">
-                  <h2 className="text-xl font-bold text-white">Event Status Timeline</h2>
-                  <p className="text-sm text-slate-300 mt-1">Latest lifecycle signals: created, updated, completed.</p>
+                  <h2 className="heading-display text-xl font-bold text-slate-900">Event Status Timeline</h2>
+                  <p className="mt-1 text-sm text-slate-500">Latest lifecycle signals: created, updated, completed.</p>
                 </div>
 
                 {statusTimelineData.length > 0 ? (
                   <div className="space-y-4">
                     {statusTimelineData.map((item) => (
                       <div key={item.id} className="relative pl-6">
-                        <div className="absolute left-0 top-1 h-3 w-3 rounded-full bg-cyan-300" />
-                        <div className="absolute left-[5px] top-5 h-[calc(100%-4px)] w-px bg-white/20" />
-                        <p className="text-sm font-semibold text-white">{item.title}</p>
-                        <p className="text-xs uppercase tracking-[0.2em] text-cyan-200 mt-1">{item.stage}</p>
-                        <p className="text-xs text-slate-400 mt-1">
+                        <div className="absolute left-0 top-1 h-3 w-3 rounded-full bg-blue-500" />
+                        <div className="absolute left-[5px] top-5 h-[calc(100%-4px)] w-px bg-slate-200" />
+                        <p className="text-sm font-semibold text-slate-900">{item.title}</p>
+                        <p className="mt-1 text-xs uppercase tracking-[0.2em] text-slate-500">{item.stage}</p>
+                        <p className="mt-1 text-xs text-slate-500">
                           {item.department} • {item.date ? new Date(item.date).toLocaleDateString() : "No date"}
                         </p>
                       </div>
@@ -780,23 +779,23 @@ export default function DashboardPage() {
 
               <GlassCard className="lg:col-span-3 p-6">
                 <div className="mb-5">
-                  <h2 className="text-xl font-bold text-white">Participation Heatmap</h2>
-                  <p className="text-sm text-slate-300 mt-1">Visual activity grid by day and top departments.</p>
+                  <h2 className="heading-display text-xl font-bold text-slate-900">Participation Heatmap</h2>
+                  <p className="mt-1 text-sm text-slate-500">Visual activity grid by day and top departments.</p>
                 </div>
 
                 {participationHeatmapData.length > 0 ? (
                   <div className="space-y-4">
                     {participationHeatmapData.map((row) => (
                       <div key={row.department} className="grid grid-cols-[120px_1fr] items-center gap-3">
-                        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-300">{row.department}</p>
+                        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">{row.department}</p>
                         <div className="grid grid-cols-7 gap-2">
                           {row.cells.map((cell) => (
                             <div
                               key={`${row.department}-${cell.day}`}
                               title={`${row.department} ${cell.day}: ${cell.value}`}
-                              className="h-8 rounded-md border border-white/20"
+                              className="h-8 rounded-md border border-slate-200"
                               style={{
-                                backgroundColor: `rgba(34, 211, 238, ${0.12 + cell.intensity * 0.75})`,
+                                backgroundColor: `rgba(59, 130, 246, ${0.08 + cell.intensity * 0.45})`,
                               }}
                             />
                           ))}
@@ -812,15 +811,15 @@ export default function DashboardPage() {
 
             <section className="mt-8 grid gap-5 md:grid-cols-2">
               <GlassCard className="p-6">
-                <p className="text-xs uppercase tracking-[0.2em] text-cyan-200">Smart Insight</p>
-                <h3 className="mt-2 text-2xl font-bold text-white">Best performing department</h3>
-                <p className="mt-2 text-lg text-cyan-100">{smartInsights.bestDepartment}</p>
+                <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Smart Insight</p>
+                <h3 className="heading-display mt-2 text-2xl font-bold text-slate-900">Best performing department</h3>
+                <p className="mt-2 text-lg text-slate-700">{smartInsights.bestDepartment}</p>
               </GlassCard>
 
               <GlassCard className="p-6">
-                <p className="text-xs uppercase tracking-[0.2em] text-amber-200">Engagement Alert</p>
-                <h3 className="mt-2 text-2xl font-bold text-white">Low engagement events</h3>
-                <p className="mt-2 text-lg text-amber-100">{smartInsights.lowEngagementCount} events under 30 participants</p>
+                <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Engagement Alert</p>
+                <h3 className="heading-display mt-2 text-2xl font-bold text-slate-900">Low engagement events</h3>
+                <p className="mt-2 text-lg text-slate-700">{smartInsights.lowEngagementCount} events under 30 participants</p>
               </GlassCard>
             </section>
           </>
@@ -842,10 +841,10 @@ function ChartPanelSkeleton({ className = "" }) {
   return (
     <GlassCard className={`p-6 ${className}`} hoverable={false}>
       <div className="mb-6 space-y-2">
-        <div className="h-6 w-56 animate-pulse rounded bg-slate-700/70" />
-        <div className="h-4 w-36 animate-pulse rounded bg-slate-700/50" />
+        <div className="h-6 w-56 animate-pulse rounded bg-slate-200" />
+        <div className="h-4 w-36 animate-pulse rounded bg-slate-100" />
       </div>
-      <div className="h-72 animate-pulse rounded-xl bg-slate-800/70" />
+      <div className="h-72 animate-pulse rounded-xl bg-slate-100" />
     </GlassCard>
   );
 }

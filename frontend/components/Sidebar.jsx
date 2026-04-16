@@ -72,7 +72,7 @@ export default function Sidebar({ className = "" }) {
       {/* Mobile Toggle Button */}
       <button
         onClick={() => setOpen(!open)}
-        className="fixed bottom-6 right-6 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-blue-500 text-white shadow-lg transition hover:bg-blue-600 md:hidden"
+        className="fixed bottom-6 right-6 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-slate-900 text-white shadow-lg transition hover:bg-slate-800 md:hidden"
       >
         {open ? <X size={24} /> : <Menu size={24} />}
       </button>
@@ -87,19 +87,19 @@ export default function Sidebar({ className = "" }) {
 
       {/* Sidebar */}
       <div
-        className={`fixed left-0 top-0 z-40 flex h-screen w-64 transform flex-col border-r border-slate-200 bg-white transition-transform duration-300 ${
+        className={`fixed left-0 top-0 z-40 flex h-screen w-64 transform flex-col border-r border-slate-800 bg-[#1E293B] transition-transform duration-300 ${
           open ? "translate-x-0" : "-translate-x-full md:translate-x-0"
         } ${className}`}
       >
         {/* Logo */}
-        <div className="border-b border-slate-200 p-6">
+        <div className="border-b border-slate-800 p-6">
           <Link href="/dashboard" className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 ring-1 ring-blue-200">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-white ring-1 ring-white/10">
               <Calendar size={20} />
             </div>
             <div>
-              <p className="heading-display text-sm font-bold tracking-wider text-slate-900">CAMCON</p>
-              <p className="text-xs text-slate-500">v1.0</p>
+              <p className="heading-display text-sm font-bold tracking-wider text-white">CAMCON</p>
+              <p className="text-xs text-slate-300">v1.0</p>
             </div>
           </Link>
         </div>
@@ -117,19 +117,19 @@ export default function Sidebar({ className = "" }) {
                 onClick={() => setOpen(false)}
                 className={`flex items-center gap-3 rounded-xl px-4 py-3 transition-all duration-200 ${
                   isActive
-                    ? "bg-blue-50 text-blue-700 ring-1 ring-blue-200"
-                    : "text-slate-700 hover:bg-slate-100 hover:text-slate-900"
+                    ? "bg-white/10 text-white ring-1 ring-white/10"
+                    : "text-slate-300 hover:bg-white/5 hover:text-white"
                 }`}
               >
                 <Icon size={20} />
                 <span className="text-sm font-medium">{item.label}</span>
                 {item.href === "/notifications" && unreadCount > 0 ? (
-                  <span className="ml-auto rounded-full bg-rose-500 px-2 py-0.5 text-[11px] font-bold text-white">
+                  <span className="ml-auto rounded-full bg-blue-500 px-2 py-0.5 text-[11px] font-bold text-white">
                     {unreadCount > 99 ? "99+" : unreadCount}
                   </span>
                 ) : null}
                 {isActive && (
-                  <div className="ml-auto h-2 w-2 rounded-full bg-blue-500" />
+                  <div className="ml-auto h-2 w-2 rounded-full bg-blue-400" />
                 )}
               </Link>
             );
@@ -137,12 +137,12 @@ export default function Sidebar({ className = "" }) {
         </nav>
 
         {/* Role Badge & Logout */}
-        <div className="space-y-3 border-t border-slate-200 p-4">
-          <div className="rounded-lg bg-slate-50 px-4 py-3 text-center">
-            <p className="mb-1 text-xs text-slate-500">Current Role</p>
+        <div className="space-y-3 border-t border-slate-800 p-4">
+          <div className="rounded-lg bg-white/5 px-4 py-3 text-center">
+            <p className="mb-1 text-xs text-slate-400">Current Role</p>
             <p
               className={`text-sm font-bold uppercase tracking-wide ${
-                role === "admin" ? "text-amber-700" : "text-slate-700"
+                role === "admin" ? "text-amber-300" : "text-slate-200"
               }`}
             >
               {role}
@@ -150,7 +150,7 @@ export default function Sidebar({ className = "" }) {
           </div>
           <button
             onClick={handleLogout}
-            className="flex w-full items-center justify-center gap-2 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-rose-700 transition hover:bg-rose-100"
+            className="flex w-full items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-slate-200 transition hover:bg-white/10"
           >
             <LogOut size={18} />
             <span className="text-sm font-medium">Logout</span>

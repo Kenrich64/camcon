@@ -94,10 +94,10 @@ export default function PredictionsPage() {
   );
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
-      <main className="px-4 py-8 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+    <div className="min-h-screen bg-slate-50 text-slate-900">
+      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {error && (
-          <div className="mb-6 rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
+          <div className="mb-6 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
             {error}
           </div>
         )}
@@ -119,19 +119,19 @@ export default function PredictionsPage() {
                 label="Predicted Attendance"
                 value={predictedAttendance.toFixed(2)}
                 icon="🎯"
-                accent="from-cyan-400/25 to-cyan-400/5"
+                accent="border-blue-100 bg-blue-50"
               />
               <StatCard
                 label="Most Active Dept"
                 value={predictions?.best_department?.department || "N/A"}
                 icon="🏆"
-                accent="from-amber-400/25 to-amber-400/5"
+                accent="border-slate-200 bg-white"
               />
               <StatCard
                 label="Success Rate"
                 value={`${successRate.toFixed(1)}%`}
                 icon="📈"
-                accent="from-green-400/25 to-green-400/5"
+                accent="border-blue-100 bg-blue-50"
               />
             </section>
 
@@ -140,15 +140,15 @@ export default function PredictionsPage() {
               <GlassCard className="p-6">
                 <div className="mb-6 flex items-center justify-between">
                   <div>
-                    <h2 className="text-xl font-bold text-white">Predicted vs Actual Attendance</h2>
-                    <p className="text-sm text-slate-400 mt-1">
+                    <h2 className="heading-display text-xl font-bold text-slate-900">Predicted vs Actual Attendance</h2>
+                    <p className="mt-1 text-sm text-slate-500">
                       Comparison of forecasted vs actual attendance
                     </p>
                   </div>
                   <button
                     onClick={() => loadPredictions(true)}
                     disabled={refreshing}
-                    className="flex items-center gap-2 px-4 py-2 rounded-lg bg-cyan-500/20 text-cyan-300 hover:bg-cyan-500/30 transition disabled:opacity-50"
+                    className="btn-secondary"
                   >
                     <RefreshCw size={16} className={refreshing ? "animate-spin" : ""} />
                     {refreshing ? "Refreshing" : "Refresh"}
@@ -158,19 +158,19 @@ export default function PredictionsPage() {
                 <div className="h-96 w-full">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={chartData} margin={{ top: 20, right: 20, left: 0, bottom: 5 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.15)" />
-                      <XAxis dataKey="label" stroke="#94a3b8" />
-                      <YAxis stroke="#94a3b8" />
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.18)" />
+                      <XAxis dataKey="label" stroke="#64748b" />
+                      <YAxis stroke="#64748b" />
                       <Tooltip
                         contentStyle={{
-                          background: "#0f172a",
-                          border: "1px solid rgba(148,163,184,0.2)",
+                          background: "#ffffff",
+                          border: "1px solid rgba(148,163,184,0.25)",
                           borderRadius: "12px",
-                          color: "#e2e8f0",
+                          color: "#0f172a",
                         }}
                       />
-                      <Bar dataKey="attendance" fill="#06b6d4" radius={[8, 8, 0, 0]} maxBarSize={120}>
-                        <LabelList dataKey="attendance" position="top" fill="#e2e8f0" />
+                      <Bar dataKey="attendance" fill="#3b82f6" radius={[8, 8, 0, 0]} maxBarSize={120}>
+                        <LabelList dataKey="attendance" position="top" fill="#0f172a" />
                       </Bar>
                     </BarChart>
                   </ResponsiveContainer>
@@ -181,31 +181,31 @@ export default function PredictionsPage() {
             {/* Insights */}
             <section>
               <GlassCard className="p-6">
-                <h3 className="text-lg font-bold text-white mb-4">Key Insights</h3>
-                <div className="space-y-3 text-sm text-slate-300">
+                <h3 className="heading-display mb-4 text-lg font-bold text-slate-900">Key Insights</h3>
+                <div className="space-y-3 text-sm text-slate-600">
                   <div className="flex items-start gap-3">
-                    <span className="text-cyan-400 mt-1">•</span>
+                    <span className="mt-1 text-blue-600">•</span>
                     <p>
                       Your predicted average attendance is{" "}
-                      <span className="font-semibold text-cyan-300">
+                      <span className="font-semibold text-blue-700">
                         {predictedAttendance.toFixed(2)} students
                       </span>
                     </p>
                   </div>
                   <div className="flex items-start gap-3">
-                    <span className="text-cyan-400 mt-1">•</span>
+                    <span className="mt-1 text-blue-600">•</span>
                     <p>
                       Actual average attendance{" "}
-                      <span className="font-semibold text-cyan-300">
+                      <span className="font-semibold text-blue-700">
                         {actualAttendance.toFixed(2)} students
                       </span>
                     </p>
                   </div>
                   <div className="flex items-start gap-3">
-                    <span className="text-cyan-400 mt-1">•</span>
+                    <span className="mt-1 text-blue-600">•</span>
                     <p>
                       The{" "}
-                      <span className="font-semibold text-amber-300">
+                      <span className="font-semibold text-slate-900">
                         {predictions?.best_department?.department}
                       </span>{" "}
                       department shows the strongest engagement
