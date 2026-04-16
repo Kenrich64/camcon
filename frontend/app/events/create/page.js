@@ -17,17 +17,17 @@ export default function CreateEventPage() {
   }, [router]);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
+    <div className="min-h-screen bg-slate-50 text-slate-900">
       <Navbar />
       <main className="mx-auto max-w-4xl px-4 py-10 sm:px-6 lg:px-8">
-        <div className="rounded-2xl border border-white/10 bg-slate-800 p-8 shadow-glow">
-          <h1 className="text-2xl font-semibold text-white">Create Event</h1>
-          <p className="mt-3 text-slate-300">
+        <div className="surface-card p-8">
+          <h1 className="heading-display text-2xl font-semibold text-slate-900">Create Event</h1>
+          <p className="mt-3 text-slate-600">
             Event creation is currently available in the Events page form.
           </p>
           <Link
             href="/events"
-            className="mt-6 inline-flex rounded-xl bg-cyan-400 px-4 py-2 font-semibold text-slate-950 transition hover:bg-cyan-300"
+            className="btn-primary mt-6"
           >
             Go to Events
           </Link>

@@ -42,83 +42,80 @@ export default function RegisterPage() {
   };
 
   return (
-    <main className="min-h-screen bg-slate-950 flex items-center justify-center px-4 py-10">
-      <div className="fixed inset-0 overflow-hidden">
-        <div className="absolute -top-44 -right-40 w-[520px] h-[520px] rounded-full opacity-20 bg-gradient-to-br from-emerald-500 to-cyan-500 blur-3xl" />
-        <div className="absolute -bottom-40 -left-44 w-[520px] h-[520px] rounded-full opacity-20 bg-gradient-to-tr from-blue-500 to-teal-500 blur-3xl" />
-      </div>
+    <main className="min-h-screen bg-slate-50 px-4 py-10">
+      <div className="mx-auto flex min-h-[88vh] w-full max-w-md items-center justify-center">
+        <div className="surface-card w-full p-8 shadow-sm sm:p-10">
+          <h1 className="heading-display mb-2 text-2xl font-bold text-slate-900">Create Account</h1>
+          <p className="mb-8 text-sm text-slate-500">Register to start using Camcon.</p>
 
-      <div className="relative z-10 w-full max-w-md rounded-2xl border border-white/10 bg-slate-950/75 backdrop-blur-xl p-8 shadow-2xl">
-        <h1 className="text-2xl font-bold text-white mb-2">Create Account</h1>
-        <p className="text-slate-400 text-sm mb-8">Register to start using Camcon.</p>
-
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">Name</label>
-            <input
-              name="name"
-              type="text"
-              value={form.name}
-              onChange={handleChange}
-              required
-              placeholder="Your full name"
-              className="w-full rounded-xl border border-white/10 bg-slate-950/50 px-4 py-3 text-white placeholder:text-slate-500 focus:border-emerald-400/60 focus:outline-none focus:ring-2 focus:ring-emerald-400/20 transition-all"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">Email</label>
-            <input
-              name="email"
-              type="email"
-              value={form.email}
-              onChange={handleChange}
-              required
-              placeholder="you@example.com"
-              className="w-full rounded-xl border border-white/10 bg-slate-950/50 px-4 py-3 text-white placeholder:text-slate-500 focus:border-emerald-400/60 focus:outline-none focus:ring-2 focus:ring-emerald-400/20 transition-all"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">Password</label>
-            <input
-              name="password"
-              type="password"
-              value={form.password}
-              onChange={handleChange}
-              required
-              placeholder="Create password"
-              className="w-full rounded-xl border border-white/10 bg-slate-950/50 px-4 py-3 text-white placeholder:text-slate-500 focus:border-emerald-400/60 focus:outline-none focus:ring-2 focus:ring-emerald-400/20 transition-all"
-            />
-          </div>
-
-          {error && (
-            <div className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
-              {error}
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div>
+              <label className="mb-2 block text-sm font-medium text-slate-700">Name</label>
+              <input
+                name="name"
+                type="text"
+                value={form.name}
+                onChange={handleChange}
+                required
+                placeholder="Your full name"
+                className="input-field"
+              />
             </div>
-          )}
 
-          {success && (
-            <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
-              {success}
+            <div>
+              <label className="mb-2 block text-sm font-medium text-slate-700">Email</label>
+              <input
+                name="email"
+                type="email"
+                value={form.email}
+                onChange={handleChange}
+                required
+                placeholder="you@example.com"
+                className="input-field"
+              />
             </div>
-          )}
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 px-4 py-3 font-semibold text-white hover:from-emerald-400 hover:to-cyan-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? (
-              <>
-                <Loader size={18} className="animate-spin" />
-                Registering...
-              </>
-            ) : (
-              "Register"
+            <div>
+              <label className="mb-2 block text-sm font-medium text-slate-700">Password</label>
+              <input
+                name="password"
+                type="password"
+                value={form.password}
+                onChange={handleChange}
+                required
+                placeholder="Create password"
+                className="input-field"
+              />
+            </div>
+
+            {error && (
+              <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                {error}
+              </div>
             )}
-          </button>
-        </form>
+
+            {success && (
+              <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+                {success}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="btn-primary w-full"
+            >
+              {loading ? (
+                <>
+                  <Loader size={18} className="animate-spin" />
+                  Registering...
+                </>
+              ) : (
+                "Register"
+              )}
+            </button>
+          </form>
+        </div>
       </div>
     </main>
   );

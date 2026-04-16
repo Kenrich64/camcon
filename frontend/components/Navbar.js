@@ -54,28 +54,28 @@ export default function Navbar() {
   };
 
   return (
-    <header className="sticky top-0 z-40 border-b border-white/10 bg-slate-950/85 backdrop-blur-xl">
+    <header className="sticky top-0 z-40 border-b border-slate-200 bg-white">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
         <Link href="/dashboard" className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-cyan-400/15 text-cyan-300 ring-1 ring-cyan-400/25">
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 ring-1 ring-blue-200">
             C
           </div>
           <div>
-            <p className="text-sm font-semibold tracking-[0.22em] text-cyan-300 uppercase">Camcon</p>
-            <p className="text-xs text-slate-400">Event analytics dashboard</p>
+            <p className="text-sm font-semibold tracking-[0.22em] text-slate-900 uppercase">Camcon</p>
+            <p className="text-xs text-slate-500">Event analytics dashboard</p>
           </div>
           <span
             className={`ml-2 rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] ${
               role === "admin"
-                ? "bg-amber-400/20 text-amber-300 ring-1 ring-amber-400/25"
-                : "bg-white/10 text-slate-300 ring-1 ring-white/20"
+                ? "bg-amber-50 text-amber-700 ring-1 ring-amber-200"
+                : "bg-slate-100 text-slate-700 ring-1 ring-slate-200"
             }`}
           >
             {role}
           </span>
         </Link>
 
-        <nav className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 p-1 shadow-glow">
+        <nav className="flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 p-1 shadow-sm">
           {navItems.map((item) => {
             const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
 
@@ -85,8 +85,8 @@ export default function Navbar() {
                 href={item.href}
                 className={`rounded-full px-4 py-2 text-sm font-medium transition ${
                   active
-                    ? "bg-cyan-400 text-slate-950 shadow-sm"
-                    : "text-slate-300 hover:bg-white/10 hover:text-white"
+                    ? "bg-blue-600 text-white shadow-sm"
+                    : "text-slate-600 hover:bg-white hover:text-slate-900"
                 }`}
               >
                 {item.label}
@@ -101,7 +101,7 @@ export default function Navbar() {
           <button
             type="button"
             onClick={handleLogout}
-            className="rounded-full px-4 py-2 text-sm font-medium text-slate-300 transition hover:bg-rose-500/15 hover:text-rose-300"
+            className="rounded-full px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-rose-50 hover:text-rose-700"
           >
             Logout
           </button>

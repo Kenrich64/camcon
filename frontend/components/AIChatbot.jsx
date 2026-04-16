@@ -110,30 +110,30 @@ export default function AIChatbot({ context = {} }) {
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 z-40 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 px-4 py-3 text-sm font-semibold text-slate-950 shadow-lg shadow-cyan-500/30 transition-all duration-300 hover:scale-[1.03] hover:from-cyan-300 hover:to-blue-400"
+        className="fixed bottom-6 right-6 z-40 inline-flex items-center gap-2 rounded-full bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-lg transition-all duration-200 hover:bg-blue-700 hover:shadow-md"
       >
         <MessageCircle size={18} />
         AI Chat
       </button>
 
       {isOpen ? (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/55 p-3 sm:items-center">
-          <div className="w-full max-w-2xl overflow-hidden rounded-2xl border border-white/10 bg-slate-950/95 shadow-2xl backdrop-blur-xl animate-slide-in">
-            <div className="flex items-center justify-between border-b border-white/10 bg-slate-900/70 px-4 py-3">
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/35 p-3 sm:items-center">
+          <div className="animate-slide-in w-full max-w-2xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
+            <div className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3">
               <div className="flex items-center gap-3">
-                <div className="rounded-lg bg-cyan-400/20 p-2 text-cyan-300">
+                <div className="rounded-lg bg-blue-50 p-2 text-blue-600">
                   <Bot size={18} />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-white">Camcon AI Assistant</p>
-                  <p className="text-xs text-slate-400">Campus analytics chat</p>
+                  <p className="text-sm font-semibold text-slate-900">Camcon AI Assistant</p>
+                  <p className="text-xs text-slate-500">Campus analytics chat</p>
                 </div>
               </div>
 
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
-                className="rounded-lg p-2 text-slate-400 transition hover:bg-white/10 hover:text-white"
+                className="rounded-lg p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
                 aria-label="Close chat"
               >
                 <X size={18} />
@@ -151,8 +151,8 @@ export default function AIChatbot({ context = {} }) {
                     <div
                       className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-6 ${
                         isUser
-                          ? "bg-gradient-to-r from-cyan-400 to-blue-500 text-slate-950"
-                          : "border border-white/10 bg-slate-800/70 text-slate-200"
+                          ? "bg-blue-600 text-white"
+                          : "border border-slate-200 bg-slate-50 text-slate-700"
                       }`}
                     >
                       <p className="whitespace-pre-wrap break-words">{content}</p>
@@ -163,18 +163,18 @@ export default function AIChatbot({ context = {} }) {
 
               {loading ? (
                 <div className="flex justify-start">
-                  <div className="rounded-2xl border border-white/10 bg-slate-800/70 px-4 py-3 text-slate-300">
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-500">
                     <div className="flex items-center gap-1">
-                      <span className="h-2 w-2 animate-bounce rounded-full bg-cyan-300" />
-                      <span className="h-2 w-2 animate-bounce rounded-full bg-cyan-300 [animation-delay:120ms]" />
-                      <span className="h-2 w-2 animate-bounce rounded-full bg-cyan-300 [animation-delay:240ms]" />
+                      <span className="h-2 w-2 animate-bounce rounded-full bg-blue-500" />
+                      <span className="h-2 w-2 animate-bounce rounded-full bg-blue-500 [animation-delay:120ms]" />
+                      <span className="h-2 w-2 animate-bounce rounded-full bg-blue-500 [animation-delay:240ms]" />
                     </div>
                   </div>
                 </div>
               ) : null}
             </div>
 
-            <div className="border-t border-white/10 bg-slate-900/60 px-4 py-3">
+            <div className="border-t border-slate-200 bg-white px-4 py-3">
               <div className="flex items-end gap-3">
                 <textarea
                   rows={2}
@@ -182,13 +182,13 @@ export default function AIChatbot({ context = {} }) {
                   onChange={(event) => setInput(event.target.value)}
                   onKeyDown={onInputKeyDown}
                   placeholder="Ask about events, attendance, departments, or feedback..."
-                  className="w-full resize-none rounded-xl border border-white/10 bg-slate-950 px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/20"
+                  className="w-full resize-none rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
                 />
                 <button
                   type="button"
                   onClick={handleSend}
                   disabled={loading || !input.trim()}
-                  className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-r from-cyan-400 to-blue-500 text-slate-950 transition hover:from-cyan-300 hover:to-blue-400 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-blue-600 text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
                   aria-label="Send message"
                 >
                   <Send size={16} />

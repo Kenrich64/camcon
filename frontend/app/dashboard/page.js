@@ -9,7 +9,6 @@ import toast from "react-hot-toast";
 import {
   LineChart,
   Line,
-  Area,
   BarChart,
   Bar,
   XAxis,
@@ -581,16 +580,6 @@ export default function DashboardPage() {
                   {participationTrendData.length > 0 ? (
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart data={participationTrendData} margin={{ left: 4, right: 14, top: 16, bottom: 8 }}>
-                        <defs>
-                          <linearGradient id="trendFill" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#22d3ee" stopOpacity={0.45} />
-                            <stop offset="95%" stopColor="#22d3ee" stopOpacity={0.02} />
-                          </linearGradient>
-                          <linearGradient id="trendStroke" x1="0" y1="0" x2="1" y2="0">
-                            <stop offset="0%" stopColor="#22d3ee" />
-                            <stop offset="100%" stopColor="#818cf8" />
-                          </linearGradient>
-                        </defs>
                         <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.18)" />
                         <XAxis dataKey="month" stroke="#64748b" tickLine={false} />
                         <YAxis stroke="#64748b" tickLine={false} />
@@ -602,18 +591,10 @@ export default function DashboardPage() {
                             color: "#0f172a",
                           }}
                         />
-                        <Area
-                          type="monotone"
-                          dataKey="totalAttendance"
-                          stroke="none"
-                          fill="url(#trendFill)"
-                          isAnimationActive
-                          animationDuration={1000}
-                        />
                         <Line
                           type="monotone"
                           dataKey="totalAttendance"
-                          stroke="url(#trendStroke)"
+                          stroke="#3b82f6"
                           strokeWidth={3}
                           dot={{ r: 3, strokeWidth: 1, fill: "#ffffff" }}
                           activeDot={{ r: 6, stroke: "#3b82f6", strokeWidth: 2, fill: "#ffffff" }}
@@ -638,20 +619,6 @@ export default function DashboardPage() {
                   {departmentDistributionData.length > 0 ? (
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
-                        <defs>
-                          <linearGradient id="deptGradA" x1="0" y1="0" x2="1" y2="1">
-                            <stop offset="0%" stopColor="#22d3ee" />
-                            <stop offset="100%" stopColor="#38bdf8" />
-                          </linearGradient>
-                          <linearGradient id="deptGradB" x1="0" y1="0" x2="1" y2="1">
-                            <stop offset="0%" stopColor="#60a5fa" />
-                            <stop offset="100%" stopColor="#818cf8" />
-                          </linearGradient>
-                          <linearGradient id="deptGradC" x1="0" y1="0" x2="1" y2="1">
-                            <stop offset="0%" stopColor="#a78bfa" />
-                            <stop offset="100%" stopColor="#f472b6" />
-                          </linearGradient>
-                        </defs>
                         <Pie
                           data={departmentDistributionData}
                           dataKey="participationCount"
@@ -665,13 +632,13 @@ export default function DashboardPage() {
                           {departmentDistributionData.map((entry, index) => (
                             <Cell
                               key={`dept-${index}`}
-                              fill={
-                                index % 3 === 0
-                                  ? "url(#deptGradA)"
-                                  : index % 3 === 1
-                                    ? "url(#deptGradB)"
-                                    : "url(#deptGradC)"
-                              }
+                              fill={[
+                                "#3b82f6",
+                                "#10b981",
+                                "#f59e0b",
+                                "#ef4444",
+                                "#0f172a",
+                              ][index % 5]}
                             />
                           ))}
                         </Pie>
@@ -705,12 +672,6 @@ export default function DashboardPage() {
                   <div className="h-[26rem]">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={attendanceComparisonData} margin={{ top: 20, right: 20, left: 0, bottom: 72 }}>
-                        <defs>
-                          <linearGradient id="barFill" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="#22d3ee" />
-                            <stop offset="100%" stopColor="#3b82f6" />
-                          </linearGradient>
-                        </defs>
                         <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.15)" />
                         <XAxis
                           dataKey="name"
@@ -732,7 +693,7 @@ export default function DashboardPage() {
                         />
                         <Bar
                           dataKey="attendance"
-                          fill="url(#barFill)"
+                          fill="#3b82f6"
                           radius={[10, 10, 0, 0]}
                           maxBarSize={56}
                           isAnimationActive
