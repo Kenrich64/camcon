@@ -2,6 +2,7 @@ const csv = require("csv-parser");
 const { Readable } = require("stream");
 const XLSX = require("xlsx");
 const pool = require("../db");
+const { createNotification } = require("./notificationsController");
 
 const REQUIRED_FIELDS = [
   "event_name",
@@ -75,19 +76,6 @@ const validateRow = (row, index) => {
   return null;
 };
 
-const findDuplicate = async (client, row) => {
-  const duplicateCheck = await client.query(
-    `SELECT id
-     FROM events
-     WHERE LOWER(title) = LOWER($1)
-       AND LOWER(department) = LOWER($2)
-     LIMIT 1`,
-    [row.event_name, row.department]
-  );
-
-  return duplicateCheck.rows.length > 0;
-};
-
 const ensureUploadLogsTable = async (client) => {
   await client.query(`
     CREATE TABLE IF NOT EXISTS upload_logs (
@@ -141,22 +129,20 @@ const uploadCsv = async (req, res, next) => {
 
     const client = await pool.connect();
     let insertedRows = 0;
-    let skippedDuplicates = 0;
 
     try {
       await client.query("BEGIN");
       await ensureUploadLogsTable(client);
       await ensureEventsAttendanceColumn(client);
 
+      // Replace existing event dataset so analytics and AI insights rely only on the latest upload.
+      await client.query("DELETE FROM feedback");
+      await client.query("DELETE FROM participation");
+      await client.query("DELETE FROM events");
+
       const today = new Date().toISOString().slice(0, 10);
 
       for (const row of rows) {
-        const isDuplicate = await findDuplicate(client, row);
-        if (isDuplicate) {
-          skippedDuplicates += 1;
-          continue;
-        }
-
         await client.query(
           `INSERT INTO events (title, department, date, venue, total_students, attended_students, status)
            VALUES ($1, $2, $3, $4, $5, $6, $7)`,
@@ -188,11 +174,18 @@ const uploadCsv = async (req, res, next) => {
       client.release();
     }
 
+    await createNotification({
+      title: "Dataset Updated",
+      message: `${req.file.originalname} uploaded. Analytics now reflect the latest dataset only.`,
+      type: "update",
+      targetAudience: "all",
+    });
+
     return res.status(201).json({
       message: "File processed successfully",
       totalRows: rows.length,
       insertedRows,
-      skippedDuplicates,
+      skippedDuplicates: 0,
       invalidRows: 0,
     });
   } catch (error) {

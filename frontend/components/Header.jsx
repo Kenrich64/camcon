@@ -93,18 +93,18 @@ export default function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-20 border-b border-white/10 bg-slate-900/35 backdrop-blur-2xl">
+    <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/95 backdrop-blur">
       <div className="px-6 py-5">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <p className="text-xs uppercase tracking-[0.28em] text-cyan-300/80 font-semibold mb-2">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
               {config.icon} {pathname.slice(1).toUpperCase() || "HOME"}
             </p>
-            <h1 className="text-3xl md:text-4xl font-bold text-white tracking-tight">
+            <h1 className="heading-display text-3xl font-bold tracking-tight text-slate-900 md:text-4xl">
               {config.title}
             </h1>
             {config.subtitle && (
-              <p className="text-sm text-slate-400 mt-1">{config.subtitle}</p>
+              <p className="mt-1 text-sm text-slate-500">{config.subtitle}</p>
             )}
           </div>
 
@@ -113,7 +113,7 @@ export default function Header() {
               <button
                 type="button"
                 onClick={() => setDropdownOpen((current) => !current)}
-                className="relative flex h-11 w-11 items-center justify-center rounded-2xl border border-white/20 bg-white/10 text-cyan-200 transition hover:scale-105 hover:bg-white/15"
+                className="relative flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 transition hover:bg-slate-100"
               >
                 <Bell size={18} />
                 {unreadCount > 0 ? (
@@ -124,14 +124,14 @@ export default function Header() {
               </button>
 
               {dropdownOpen ? (
-                <div className="animate-slide-in absolute right-0 top-14 z-30 w-80 rounded-2xl border border-white/20 bg-slate-900/90 p-3 shadow-2xl backdrop-blur-xl">
+                <div className="animate-slide-in absolute right-0 top-14 z-30 w-80 rounded-2xl border border-slate-200 bg-white p-3 shadow-xl">
                   <div className="mb-2 flex items-center justify-between px-1">
-                    <p className="text-sm font-semibold text-white">Recent notifications</p>
-                    <p className="text-xs text-slate-400">{unreadCount} unread</p>
+                    <p className="text-sm font-semibold text-slate-900">Recent notifications</p>
+                    <p className="text-xs text-slate-500">{unreadCount} unread</p>
                   </div>
                   <div className="space-y-2">
                     {previewNotifications.length === 0 ? (
-                      <p className="rounded-xl border border-white/10 bg-white/5 px-3 py-4 text-xs text-slate-400">
+                      <p className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-4 text-xs text-slate-500">
                         No notifications yet.
                       </p>
                     ) : (
@@ -140,15 +140,15 @@ export default function Header() {
                           key={notification.id}
                           type="button"
                           onClick={() => markAsRead(notification.id)}
-                          className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-left transition hover:bg-white/10"
+                          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-left transition hover:bg-slate-100"
                         >
                           <div className="mb-1 flex items-center justify-between gap-2">
-                            <p className="text-xs font-semibold text-white">{notification.title}</p>
+                            <p className="text-xs font-semibold text-slate-900">{notification.title}</p>
                             {!notification.is_read ? (
-                              <span className="rounded-full bg-cyan-400 px-2 py-0.5 text-[10px] font-bold text-slate-950">New</span>
+                              <span className="rounded-full bg-blue-500 px-2 py-0.5 text-[10px] font-bold text-white">New</span>
                             ) : null}
                           </div>
-                          <p className="line-clamp-2 text-xs text-slate-300">{notification.message}</p>
+                          <p className="line-clamp-2 text-xs text-slate-600">{notification.message}</p>
                           <p className="mt-1 text-[10px] text-slate-500">{formatTime(notification.created_at)}</p>
                         </button>
                       ))
@@ -158,22 +158,22 @@ export default function Header() {
               ) : null}
             </div>
 
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800/50 border border-white/10">
-              <span className="text-xs text-slate-400">Role:</span>
+            <div className="hidden items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 sm:flex">
+              <span className="text-xs text-slate-500">Role:</span>
               <span
                 className={`text-sm font-semibold ${
                   role === "admin"
-                    ? "text-amber-300"
-                    : "text-slate-300"
+                    ? "text-amber-700"
+                    : "text-slate-700"
                 }`}
               >
                 {role.toUpperCase()}
               </span>
             </div>
 
-            <div className="hidden lg:flex items-center gap-2 rounded-xl border border-cyan-300/30 bg-cyan-400/10 px-3 py-2">
-              <Sparkles size={14} className="text-cyan-300" />
-              <p className="text-xs font-semibold text-cyan-100">Premium workspace</p>
+            <div className="hidden items-center gap-2 rounded-xl border border-blue-100 bg-blue-50 px-3 py-2 lg:flex">
+              <Sparkles size={14} className="text-blue-600" />
+              <p className="text-xs font-semibold text-blue-700">Professional workspace</p>
             </div>
           </div>
         </div>

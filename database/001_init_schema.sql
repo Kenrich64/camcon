@@ -44,8 +44,17 @@ CREATE TABLE IF NOT EXISTS notifications (
   title VARCHAR(255),
   message TEXT,
   type VARCHAR(50),
+  target_audience VARCHAR(20) NOT NULL DEFAULT 'all' CHECK (target_audience IN ('all', 'admin', 'user')),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   is_read BOOLEAN DEFAULT FALSE
+);
+
+CREATE TABLE IF NOT EXISTS notification_reads (
+  id SERIAL PRIMARY KEY,
+  notification_id INTEGER NOT NULL REFERENCES notifications(id) ON DELETE CASCADE,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  read_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(notification_id, user_id)
 );
 
 CREATE INDEX IF NOT EXISTS idx_events_department ON events(department);
@@ -54,3 +63,5 @@ CREATE INDEX IF NOT EXISTS idx_participation_event_id ON participation(event_id)
 CREATE INDEX IF NOT EXISTS idx_feedback_event_id ON feedback(event_id);
 CREATE INDEX IF NOT EXISTS idx_notifications_created_at ON notifications(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_notifications_is_read ON notifications(is_read);
+CREATE INDEX IF NOT EXISTS idx_notifications_target_audience ON notifications(target_audience);
+CREATE INDEX IF NOT EXISTS idx_notification_reads_user_id ON notification_reads(user_id);

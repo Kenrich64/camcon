@@ -1,10 +1,16 @@
 import type { Metadata } from "next";
-import { Space_Grotesk, IBM_Plex_Mono } from "next/font/google";
+import { Inter, Poppins, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import AppLayout from "@/components/AppLayout";
 
-const spaceGrotesk = Space_Grotesk({
+const inter = Inter({
   variable: "--font-sans",
+  subsets: ["latin"],
+});
+
+const poppins = Poppins({
+  variable: "--font-display",
+  weight: ["600", "700"],
   subsets: ["latin"],
 });
 
@@ -25,7 +31,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${spaceGrotesk.variable} ${ibmPlexMono.variable} h-full antialiased`}>
+    <html lang="en" className={`${inter.variable} ${poppins.variable} ${ibmPlexMono.variable} h-full antialiased`}>
       <body className="min-h-full">
         <AppLayout>{children}</AppLayout>
       </body>

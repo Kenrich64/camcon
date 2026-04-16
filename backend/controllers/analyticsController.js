@@ -29,12 +29,11 @@ const getDepartmentDistribution = async (req, res, next) => {
   try {
     const result = await pool.query(`
       SELECT
-        e.department,
-        COUNT(DISTINCT e.id)::int AS event_count,
-        COALESCE(SUM(COALESCE(p.attended, 0)), 0)::int AS participation_count
-      FROM events e
-      LEFT JOIN participation p ON p.event_id = e.id
-      GROUP BY e.department
+        department,
+        COUNT(*)::int AS event_count,
+        COALESCE(SUM(attended_students), 0)::int AS participation_count
+      FROM events
+      GROUP BY department
       ORDER BY participation_count DESC
     `);
 
@@ -56,13 +55,12 @@ const getParticipationTrend = async (req, res, next) => {
   try {
     const result = await pool.query(`
       SELECT
-        TO_CHAR(DATE_TRUNC('month', e.date), 'YYYY-MM') AS month,
-        COALESCE(SUM(COALESCE(p.attended, 0)), 0)::int AS total_attendance,
-        COUNT(DISTINCT e.id)::int AS total_events
-      FROM events e
-      LEFT JOIN participation p ON p.event_id = e.id
-      GROUP BY DATE_TRUNC('month', e.date)
-      ORDER BY DATE_TRUNC('month', e.date)
+        TO_CHAR(DATE_TRUNC('month', date), 'YYYY-MM') AS month,
+        COALESCE(SUM(attended_students), 0)::int AS total_attendance,
+        COUNT(*)::int AS total_events
+      FROM events
+      GROUP BY DATE_TRUNC('month', date)
+      ORDER BY DATE_TRUNC('month', date)
     `);
 
     res.json({

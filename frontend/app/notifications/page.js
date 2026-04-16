@@ -76,19 +76,19 @@ export default function NotificationsPage() {
   const unreadCount = notifications.filter((item) => !item.is_read).length;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-800 text-slate-100">
+    <div className="min-h-screen bg-slate-50 text-slate-900">
       <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
-        <section className="mb-7 rounded-3xl border border-white/20 bg-white/10 p-6 backdrop-blur-lg">
+        <section className="mb-7 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-cyan-200/80">Realtime alerts</p>
-              <h1 className="mt-2 text-4xl font-bold text-white">Notifications</h1>
-              <p className="mt-2 text-sm text-slate-300">Track every event update with instant status changes.</p>
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Realtime alerts</p>
+              <h1 className="heading-display mt-2 text-4xl font-bold text-slate-900">Notifications</h1>
+              <p className="mt-2 text-sm text-slate-600">Track event and dataset updates across your workspace.</p>
             </div>
-            <div className="flex items-center gap-3 rounded-2xl border border-white/20 bg-black/20 px-4 py-3">
-              <BellRing className="text-cyan-300" size={18} />
-              <p className="text-sm text-slate-200">
-                Unread <span className="font-bold text-white">{unreadCount}</span>
+            <div className="flex items-center gap-3 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3">
+              <BellRing className="text-blue-600" size={18} />
+              <p className="text-sm text-slate-700">
+                Unread <span className="font-bold text-slate-900">{unreadCount}</span>
               </p>
             </div>
           </div>
@@ -100,10 +100,10 @@ export default function NotificationsPage() {
               key={tab.id}
               type="button"
               onClick={() => setActiveTab(tab.id)}
-              className={`rounded-xl px-5 py-2.5 text-sm font-semibold shadow-lg transition hover:scale-105 ${
+              className={`rounded-xl px-5 py-2.5 text-sm font-semibold transition ${
                 activeTab === tab.id
-                  ? "bg-cyan-300 text-slate-900"
-                  : "border border-white/20 bg-white/10 text-slate-200"
+                  ? "bg-blue-500 text-white"
+                  : "border border-slate-300 bg-white text-slate-700 hover:bg-slate-100"
               }`}
             >
               {tab.label}
@@ -113,51 +113,59 @@ export default function NotificationsPage() {
 
         <section className="space-y-4">
           {loading ? (
-            <div className="rounded-2xl border border-white/20 bg-white/10 p-5 backdrop-blur-lg">
-              <p className="text-slate-300">Loading notifications...</p>
+            <div className="rounded-2xl border border-slate-200 bg-white p-5">
+              <p className="text-slate-600">Loading notifications...</p>
             </div>
           ) : filteredNotifications.length === 0 ? (
-            <div className="rounded-2xl border border-white/20 bg-white/10 p-10 text-center backdrop-blur-lg">
-              <p className="text-lg font-semibold text-white">No notifications found</p>
-              <p className="mt-2 text-sm text-slate-300">Switch tabs to explore other alerts.</p>
+            <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center">
+              <p className="text-lg font-semibold text-slate-900">No notifications found</p>
+              <p className="mt-2 text-sm text-slate-500">Switch tabs to explore other alerts.</p>
             </div>
           ) : (
             filteredNotifications.map((notification) => (
               <article
                 key={notification.id}
-                className="rounded-2xl border border-white/20 bg-white/10 p-5 backdrop-blur-lg transition hover:-translate-y-0.5 hover:bg-white/15"
+                onClick={() => {
+                  if (!notification.is_read) {
+                    markAsRead(notification.id);
+                  }
+                }}
+                className="rounded-2xl border border-slate-200 bg-white p-5 transition hover:-translate-y-0.5 hover:shadow-sm"
               >
                 <div className="mb-3 flex items-start justify-between gap-3">
                   <div className="flex items-center gap-2">
-                    <CircleDot size={16} className="text-cyan-300" />
-                    <h2 className="text-lg font-semibold text-white">{notification.title || "Event Update"}</h2>
+                    <CircleDot size={16} className="text-blue-500" />
+                    <h2 className="text-lg font-semibold text-slate-900">{notification.title || "Event Update"}</h2>
                   </div>
                   <span
                     className={`rounded-full px-3 py-1 text-xs font-semibold uppercase ${
                       notification.type === "new"
-                        ? "bg-emerald-400/20 text-emerald-200"
-                        : "bg-amber-400/20 text-amber-200"
+                        ? "bg-emerald-100 text-emerald-700"
+                        : "bg-amber-100 text-amber-700"
                     }`}
                   >
                     {notification.type || "update"}
                   </span>
                 </div>
-                <p className="text-sm text-slate-200">{notification.message}</p>
+                <p className="text-sm text-slate-700">{notification.message}</p>
                 <div className="mt-4 flex items-center justify-between gap-4">
-                  <p className="inline-flex items-center gap-1 text-xs text-slate-400">
+                  <p className="inline-flex items-center gap-1 text-xs text-slate-500">
                     <Clock3 size={12} />
                     {notification.created_at ? new Date(notification.created_at).toLocaleString() : "Now"}
                   </p>
                   {!notification.is_read ? (
                     <button
                       type="button"
-                      onClick={() => markAsRead(notification.id)}
-                      className="inline-flex items-center gap-2 rounded-xl border border-cyan-200/40 bg-cyan-400/20 px-3 py-1.5 text-xs font-semibold text-cyan-100 transition hover:scale-105"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        markAsRead(notification.id);
+                      }}
+                      className="inline-flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700 transition hover:bg-blue-100"
                     >
                       <CheckCheck size={14} /> Mark as read
                     </button>
                   ) : (
-                    <span className="text-xs font-semibold text-emerald-300">Read</span>
+                    <span className="text-xs font-semibold text-emerald-700">Read</span>
                   )}
                 </div>
               </article>

@@ -41,6 +41,7 @@ export default function DashboardPage() {
   const [exportLoading, setExportLoading] = useState(false);
   const [aiInsight, setAiInsight] = useState("");
   const [typedInsight, setTypedInsight] = useState("");
+  const [notifications, setNotifications] = useState([]);
   const reportRef = useRef(null);
 
   useEffect(() => {
@@ -48,12 +49,13 @@ export default function DashboardPage() {
       try {
         console.log("[Dashboard] Loading data...");
         
-        const [overviewRes, departmentsRes, trendRes, feedbackRes, eventsRes] = await Promise.all([
+        const [overviewRes, departmentsRes, trendRes, feedbackRes, eventsRes, notificationsRes] = await Promise.all([
           API.get("/analytics/overview"),
           API.get("/analytics/departments"),
           API.get("/analytics/trend"),
           API.get("/analytics/feedback"),
           API.get("/events"),
+          API.get("/notifications"),
         ]);
 
         // Safely extract data with fallbacks
@@ -66,6 +68,7 @@ export default function DashboardPage() {
         setTrend(trendRes?.data?.series || []);
         setFeedbackStats(feedbackRes?.data?.series || []);
         setRawEvents(eventsRes?.data || []);
+        setNotifications(notificationsRes?.data || []);
         
         console.log("[Dashboard] Data loaded successfully ✅");
         setError("");
@@ -89,6 +92,7 @@ export default function DashboardPage() {
         setTrend([]);
         setFeedbackStats([]);
         setRawEvents([]);
+        setNotifications([]);
       } finally {
         setLoading(false);
       }
@@ -289,7 +293,7 @@ export default function DashboardPage() {
       };
 
       const response = await API.post("/ai/insights", payload);
-      const newInsight = response?.data?.insight || "No insight generated.";
+      const newInsight = response?.data?.insight || "";
 
       setAiInsight(newInsight);
       localStorage.setItem("camcon_ai_insight", newInsight);
@@ -302,13 +306,22 @@ export default function DashboardPage() {
         apiError?.response?.data?.message ||
         "Failed to generate AI insights. Please try again.";
       toast.error(message);
-      
-      // Set fallback insight
-      const fallbackInsight = "Based on current campus data, your event management shows steady participation. Focus on increasing department engagement and feedback collection for better insights.";
-      setAiInsight(fallbackInsight);
-      localStorage.setItem("camcon_ai_insight", fallbackInsight);
+
+      setAiInsight("");
+      localStorage.removeItem("camcon_ai_insight");
     } finally {
       setInsightLoading(false);
+    }
+  };
+
+  const markNotificationAsRead = async (notificationId) => {
+    try {
+      await API.put(`/notifications/read/${notificationId}`);
+      setNotifications((current) =>
+        current.map((item) => (item.id === notificationId ? { ...item, is_read: true } : item))
+      );
+    } catch {
+      toast.error("Could not mark notification as read");
     }
   };
 
@@ -373,7 +386,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
+    <div className="min-h-screen bg-slate-50 text-slate-900">
       <main ref={reportRef} className="px-4 py-8 sm:px-6 lg:px-8 max-w-7xl mx-auto">
         {error ? (
           <div className="mb-6 rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
@@ -443,7 +456,7 @@ export default function DashboardPage() {
                     </div>
                   </div>
 
-                  <div className="mt-5 rounded-xl border border-white/10 bg-slate-900/60 p-4">
+                  <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
                     {insightLoading ? (
                       <div className="space-y-2">
                         <div className="h-4 w-2/3 animate-pulse rounded bg-slate-700/70" />
@@ -451,17 +464,54 @@ export default function DashboardPage() {
                         <div className="h-4 w-5/6 animate-pulse rounded bg-slate-700/60" />
                       </div>
                     ) : typedInsight ? (
-                      <pre className="whitespace-pre-wrap break-words font-sans text-sm leading-6 text-slate-200">
+                      <pre className="whitespace-pre-wrap break-words font-sans text-sm leading-6 text-slate-700">
                         {typedInsight}
                       </pre>
                     ) : (
-                      <p className="text-sm text-slate-400">
+                      <p className="text-sm text-slate-500">
                         No AI insight yet. Click Generate AI Insights to analyze this dashboard.
                       </p>
                     )}
                   </div>
                 </GlassCard>
               </div>
+            </section>
+
+            <section className="mb-8">
+              <GlassCard className="p-6">
+                <div className="mb-4 flex items-center justify-between">
+                  <h2 className="heading-display text-xl font-bold text-white">Recent Notifications</h2>
+                  <p className="text-sm text-slate-300">
+                    {(notifications || []).filter((item) => !item.is_read).length} unread
+                  </p>
+                </div>
+                {(notifications || []).slice(0, 5).length === 0 ? (
+                  <p className="text-sm text-slate-300">No notifications available.</p>
+                ) : (
+                  <div className="space-y-3">
+                    {(notifications || []).slice(0, 5).map((item) => (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => {
+                          if (!item.is_read) {
+                            markNotificationAsRead(item.id);
+                          }
+                        }}
+                        className="w-full rounded-xl border border-slate-600 bg-slate-700 px-4 py-3 text-left transition hover:bg-slate-600"
+                      >
+                        <div className="mb-1 flex items-center justify-between gap-3">
+                          <p className="text-sm font-semibold text-white">{item.title || "Update"}</p>
+                          {!item.is_read ? (
+                            <span className="rounded-full bg-blue-500 px-2 py-0.5 text-[10px] font-semibold text-white">New</span>
+                          ) : null}
+                        </div>
+                        <p className="text-xs text-slate-200">{item.message}</p>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </GlassCard>
             </section>
 
             {/* Stats Grid */}

@@ -101,8 +101,8 @@ export default function AppLayout({ children }) {
   // Don't render sidebar/header on login page
   if (!isAuthPage && !hasToken) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-slate-950">
-        <div className="text-slate-300">Loading...</div>
+      <div className="flex min-h-screen items-center justify-center bg-slate-50">
+        <div className="text-slate-600">Loading...</div>
       </div>
     );
   }
@@ -115,7 +115,7 @@ export default function AppLayout({ children }) {
         <main>{children}</main>
       ) : (
         // App layout with sidebar
-        <div className="flex h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-800 overflow-hidden">
+        <div className="flex h-screen overflow-hidden bg-slate-50">
           {/* Sidebar */}
           <Sidebar />
 
