@@ -15,6 +15,14 @@ const createNotification = async ({ title, message, type = "update", targetAudie
   }
 };
 
+const getNotificationScopeClause = (role) => {
+  if (role === "admin") {
+    return "TRUE";
+  }
+
+  return "n.target_audience IN ('all', $2)";
+};
+
 const getNotifications = async (req, res, next) => {
   try {
     const userId = req.user?.id;
@@ -33,11 +41,9 @@ const getNotifications = async (req, res, next) => {
        LEFT JOIN notification_reads nr
          ON nr.notification_id = n.id
         AND nr.user_id = $1
-       WHERE $2 = 'admin'
-         OR n.target_audience = 'all'
-         OR n.target_audience = $2
+       WHERE ${getNotificationScopeClause(userRole)}
        ORDER BY n.created_at DESC`,
-      [userId, userRole]
+      userRole === "admin" ? [userId] : [userId, userRole]
     );
 
     res.json(result.rows);
@@ -46,20 +52,45 @@ const getNotifications = async (req, res, next) => {
   }
 };
 
-const markNotificationAsRead = async (req, res, next) => {
-  const { id } = req.params;
-
+const getUnreadCount = async (req, res, next) => {
   try {
     const userId = req.user?.id;
     const userRole = req.user?.role || "user";
+
+    const result = await pool.query(
+      `SELECT COUNT(*)::int AS unread_count
+       FROM notifications n
+       LEFT JOIN notification_reads nr
+         ON nr.notification_id = n.id
+        AND nr.user_id = $1
+       WHERE ${getNotificationScopeClause(userRole)}
+         AND nr.notification_id IS NULL`,
+      userRole === "admin" ? [userId] : [userId, userRole]
+    );
+
+    return res.json({ unreadCount: result.rows[0]?.unread_count || 0 });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+const markNotificationAsRead = async (req, res, next) => {
+  try {
+    const userId = req.user?.id;
+    const userRole = req.user?.role || "user";
+    const notificationId = req.body?.notificationId || req.params?.id;
+
+    if (!notificationId) {
+      return res.status(400).json({ error: "notificationId is required" });
+    }
 
     const notificationResult = await pool.query(
       `SELECT *
        FROM notifications
        WHERE id = $1
-         AND ($2 = 'admin' OR target_audience = 'all' OR target_audience = $2)
+         AND (${userRole === "admin" ? "TRUE" : "target_audience IN ('all', $2)"})
        LIMIT 1`,
-      [id, userRole]
+      userRole === "admin" ? [notificationId] : [notificationId, userRole]
     );
 
     if (notificationResult.rows.length === 0) {
@@ -67,10 +98,10 @@ const markNotificationAsRead = async (req, res, next) => {
     }
 
     await pool.query(
-      `INSERT INTO notification_reads (notification_id, user_id, read_at)
-       VALUES ($1, $2, NOW())
-       ON CONFLICT (notification_id, user_id) DO UPDATE SET read_at = EXCLUDED.read_at`,
-      [id, userId]
+      `INSERT INTO notification_reads (notification_id, user_id)
+       VALUES ($1, $2)
+       ON CONFLICT DO NOTHING`,
+      [notificationId, userId]
     );
 
     return res.json({
@@ -88,5 +119,6 @@ const markNotificationAsRead = async (req, res, next) => {
 module.exports = {
   createNotification,
   getNotifications,
+  getUnreadCount,
   markNotificationAsRead,
 };

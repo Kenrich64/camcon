@@ -2,7 +2,6 @@ const csv = require("csv-parser");
 const { Readable } = require("stream");
 const XLSX = require("xlsx");
 const pool = require("../db");
-const { createNotification } = require("./notificationsController");
 
 const REQUIRED_FIELDS = [
   "event_name",
@@ -166,6 +165,17 @@ const uploadCsv = async (req, res, next) => {
         [req.file.originalname, rows.length, insertedRows]
       );
 
+      await client.query(
+        `INSERT INTO notifications (title, message, type, target_audience)
+         VALUES ($1, $2, $3, $4)`,
+        [
+          "New Dataset Uploaded",
+          "Admin uploaded new data. Analytics updated.",
+          "update",
+          "all",
+        ]
+      );
+
       await client.query("COMMIT");
     } catch (dbError) {
       await client.query("ROLLBACK");
@@ -173,13 +183,6 @@ const uploadCsv = async (req, res, next) => {
     } finally {
       client.release();
     }
-
-    await createNotification({
-      title: "Dataset Updated",
-      message: `${req.file.originalname} uploaded. Analytics now reflect the latest dataset only.`,
-      type: "update",
-      targetAudience: "all",
-    });
 
     return res.status(201).json({
       message: "File processed successfully",

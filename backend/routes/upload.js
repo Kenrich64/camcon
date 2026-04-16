@@ -24,6 +24,7 @@ const upload = multer({
   },
 });
 
+router.post("/upload-csv", verifyToken, adminOnly, upload.single("file"), uploadCsv);
 router.post("/csv", verifyToken, adminOnly, upload.single("file"), uploadCsv);
 router.post("/", verifyToken, adminOnly, upload.single("file"), uploadCsv);
 router.get("/history", verifyToken, adminOnly, getUploadHistory);
