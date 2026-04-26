@@ -284,14 +284,7 @@ export default function DashboardPage() {
     setInsightLoading(true);
 
     try {
-      const payload = {
-        overview: overview || {},
-        trend: trend || [],
-        departments: departments || [],
-        feedback: feedbackStats || [],
-      };
-
-      const response = await API.post("/ai/insights", payload);
+      const response = await API.get("/ai-insights");
       const newInsight = response?.data?.insight || "";
 
       setAiInsight(newInsight);

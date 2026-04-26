@@ -12,6 +12,8 @@ const feedbackRoutes = require("./routes/feedback");
 const predictionsRoutes = require("./routes/predictions");
 const uploadRoutes = require("./routes/upload");
 const aiRoutes = require("./routes/ai");
+const { verifyToken } = require("./middleware/authMiddleware");
+const { getAIInsights } = require("./controllers/aiController");
 const seedRoutes = require("./routes/seed");
 const notificationsRoutes = require("./routes/notifications");
 
@@ -70,6 +72,7 @@ app.use("/feedback", feedbackRoutes);
 app.use("/predictions", predictionsRoutes);
 app.use("/upload", uploadRoutes);
 app.use("/ai", aiRoutes);
+app.get("/ai-insights", verifyToken, getAIInsights);
 app.use("/seed", seedRoutes);
 app.use("/notifications", notificationsRoutes);
 
