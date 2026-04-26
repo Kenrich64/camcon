@@ -33,6 +33,7 @@ const initialEditForm = {
 
 export default function EventsPage() {
   const router = useRouter();
+  // State management
   const [events, setEvents] = useState([]);
   const [role, setRole] = useState("user");
   const [loading, setLoading] = useState(true);
@@ -44,6 +45,7 @@ export default function EventsPage() {
   const [error, setError] = useState("");
   const [form, setForm] = useState(initialForm);
 
+  // Initial data load
   useEffect(() => {
     const savedRole = localStorage.getItem("role") || "user";
 
@@ -71,6 +73,7 @@ export default function EventsPage() {
     }
   };
 
+  // Form handlers
   const handleChange = (event) => {
     const { name, value } = event.target;
     setForm((current) => ({ ...current, [name]: value }));
@@ -187,6 +190,7 @@ export default function EventsPage() {
     }
   };
 
+  // UI rendering
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -328,7 +332,7 @@ export default function EventsPage() {
           ) : events.length === 0 ? (
             <GlassCard>
                 <EmptyState
-                  icon="📅"
+                  icon="EVENTS"
                   title="No events yet"
                   description="Create your first event to get started"
                   action={

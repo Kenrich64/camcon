@@ -19,6 +19,7 @@ import toast from "react-hot-toast";
 
 export default function PredictionsPage() {
   const router = useRouter();
+  // State management
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
@@ -32,6 +33,7 @@ export default function PredictionsPage() {
     totalParticipation: 0,
   });
 
+  // API calls
   const loadPredictions = async (isRefresh = false) => {
     if (isRefresh) {
       setRefreshing(true);
@@ -72,6 +74,7 @@ export default function PredictionsPage() {
     loadPredictions();
   }, [router]);
 
+  // Derived metrics
   const predictedAttendance = Number(predictions.average_attendance || 0);
   const actualAttendance =
     Number(overview.totalEvents || 0) > 0
@@ -93,6 +96,7 @@ export default function PredictionsPage() {
     [predictedAttendance, actualAttendance]
   );
 
+  // UI rendering
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -118,19 +122,19 @@ export default function PredictionsPage() {
               <StatCard
                 label="Predicted Attendance"
                 value={predictedAttendance.toFixed(2)}
-                icon="🎯"
+                icon="FORECAST"
                 accent="border-blue-100 bg-blue-50"
               />
               <StatCard
                 label="Most Active Dept"
                 value={predictions?.best_department?.department || "N/A"}
-                icon="🏆"
+                icon="TOP"
                 accent="border-slate-200 bg-white"
               />
               <StatCard
                 label="Success Rate"
                 value={`${successRate.toFixed(1)}%`}
-                icon="📈"
+                icon="GROWTH"
                 accent="border-blue-100 bg-blue-50"
               />
             </section>

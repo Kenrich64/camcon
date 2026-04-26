@@ -27,6 +27,7 @@ import AIChatbot from "@/components/AIChatbot";
 
 export default function DashboardPage() {
   const router = useRouter();
+  // State management
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [overview, setOverview] = useState(null);
@@ -43,11 +44,10 @@ export default function DashboardPage() {
   const [notifications, setNotifications] = useState([]);
   const reportRef = useRef(null);
 
+  // API calls
   useEffect(() => {
     const loadDashboard = async () => {
       try {
-        console.log("[Dashboard] Loading data...");
-        
         const [overviewRes, departmentsRes, trendRes, feedbackRes, eventsRes, notificationsRes] = await Promise.all([
           API.get("/analytics/overview"),
           API.get("/analytics/departments"),
@@ -68,12 +68,11 @@ export default function DashboardPage() {
         setFeedbackStats(feedbackRes?.data?.series || []);
         setRawEvents(eventsRes?.data || []);
         setNotifications(notificationsRes?.data || []);
-        
-        console.log("[Dashboard] Data loaded successfully ✅");
+
         setError("");
       } catch (apiError) {
         console.error("[Dashboard] Load error:", apiError?.message);
-        
+
         if (apiError?.response?.status === 401 || apiError?.response?.status === 403) {
           localStorage.removeItem("token");
           localStorage.removeItem("role");
@@ -127,6 +126,7 @@ export default function DashboardPage() {
     return () => clearInterval(timer);
   }, [aiInsight]);
 
+  // Derived dashboard data
   const departmentOptions = useMemo(() => {
     const set = new Set();
     rawEvents.forEach((event) => {
@@ -279,9 +279,9 @@ export default function DashboardPage() {
     };
   }, [departmentDistributionData, filteredEvents]);
 
+  // Handlers
   const handleGenerateInsights = async () => {
     setInsightLoading(true);
-    console.log("[AI] Generating insights...");
 
     try {
       const payload = {
@@ -296,7 +296,6 @@ export default function DashboardPage() {
 
       setAiInsight(newInsight);
       localStorage.setItem("camcon_ai_insight", newInsight);
-      console.log("[AI] Insights generated successfully ✅");
       toast.success("AI insights generated successfully");
     } catch (apiError) {
       console.error("[AI] Generation failed:", apiError?.message);
@@ -384,6 +383,7 @@ export default function DashboardPage() {
     return <p className="px-6 py-8 text-slate-600 dark:text-slate-400">Loading dashboard...</p>;
   }
 
+  // UI rendering
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-[#0B1220] dark:text-slate-100">
       <main ref={reportRef} className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -516,19 +516,19 @@ export default function DashboardPage() {
               <StatCard
                 label="Total Events"
                 value={overview.totalEvents}
-                icon="📅"
+                icon="EVENTS"
                 accent="border-blue-100 bg-blue-50"
               />
               <StatCard
                 label="Total Participants"
                 value={overview.totalParticipation}
-                icon="👥"
+                icon="PEOPLE"
                 accent="border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800"
               />
               <StatCard
                 label="Avg Feedback Score"
                 value={Number(overview.averageFeedbackScore || 0).toFixed(2)}
-                icon="⭐"
+                icon="SCORE"
                 accent="border-blue-100 bg-blue-50"
               />
             </section>
@@ -604,7 +604,7 @@ export default function DashboardPage() {
                       </LineChart>
                     </ResponsiveContainer>
                   ) : (
-                    <EmptyState title="No trend data" icon="📈" />
+                    <EmptyState title="No trend data" icon="TREND" />
                   )}
                 </div>
               </GlassCard>
@@ -654,7 +654,7 @@ export default function DashboardPage() {
                       </PieChart>
                     </ResponsiveContainer>
                   ) : (
-                    <EmptyState title="No data" icon="📊" />
+                    <EmptyState title="No data" icon="DATA" />
                   )}
                 </div>
               </GlassCard>
@@ -705,7 +705,7 @@ export default function DashboardPage() {
                 ) : (
                   <EmptyState
                     title="No attendance data"
-                    icon="📊"
+                    icon="DATA"
                     description="Create events to start comparing attendance"
                   />
                 )}
@@ -734,7 +734,7 @@ export default function DashboardPage() {
                     ))}
                   </div>
                 ) : (
-                  <EmptyState title="No timeline data" icon="🕒" />
+                  <EmptyState title="No timeline data" icon="TIMELINE" />
                 )}
               </GlassCard>
 
@@ -765,7 +765,7 @@ export default function DashboardPage() {
                     ))}
                   </div>
                 ) : (
-                  <EmptyState title="No heatmap data" icon="🔥" />
+                  <EmptyState title="No heatmap data" icon="HEATMAP" />
                 )}
               </GlassCard>
             </section>

@@ -5,7 +5,7 @@ const API = axios.create({
   timeout: 10000,
 });
 
-// ✅ Request interceptor - add auth token
+// Add auth token when available.
 API.interceptors.request.use((req) => {
   if (typeof window !== "undefined") {
     const token = localStorage.getItem("token");
@@ -17,7 +17,7 @@ API.interceptors.request.use((req) => {
   return req;
 });
 
-// ✅ Response interceptor - handle errors
+// Normalize auth failures and forward all errors to callers.
 API.interceptors.response.use(
   (res) => res,
   (err) => {

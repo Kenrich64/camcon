@@ -10,6 +10,7 @@ import toast from "react-hot-toast";
 
 export default function UploadPage() {
   const router = useRouter();
+  // State management
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
@@ -17,6 +18,7 @@ export default function UploadPage() {
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
 
+  // Access control
   useEffect(() => {
     const role = localStorage.getItem("role");
 
@@ -25,6 +27,7 @@ export default function UploadPage() {
     }
   }, [router]);
 
+  // Validation helpers
   const validateFile = (selectedFile) => {
     if (!selectedFile) {
       return "Please select a file";
@@ -43,6 +46,7 @@ export default function UploadPage() {
     return null;
   };
 
+  // Interaction handlers
   const handleFileChange = (event) => {
     const selectedFile = event.target.files?.[0] || null;
     const validationError = validateFile(selectedFile);
@@ -121,7 +125,7 @@ export default function UploadPage() {
       ]);
 
       setSuccess(successMsg);
-      toast.success("Upload successful! ✨");
+      toast.success("Upload completed successfully.");
       setFile(null);
       setProgress(100);
       window.location.reload();
@@ -144,6 +148,7 @@ export default function UploadPage() {
     }
   };
 
+  // UI rendering
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-[#0B1220] dark:text-slate-100">
       <main className="px-4 py-8 sm:px-6 lg:px-8 max-w-7xl mx-auto flex items-center justify-center min-h-[calc(100vh-200px)]">

@@ -71,7 +71,7 @@ export default function AppLayout({ children }) {
       const { type, event, message } = data;
       const eventTitle = event?.title || "Event";
 
-      // Color-coded toast based on type
+      // Keep a consistent, readable toast style per update type.
       const toastConfig = {
         duration: 5000,
         icon: null,
@@ -89,7 +89,6 @@ export default function AppLayout({ children }) {
             `Event Update: ${eventTitle} has been postponed`,
             {
               ...toastConfig,
-              icon: "⏰",
               style: {
                 background: "#92400e",
                 color: "#fef3c7",
@@ -103,7 +102,6 @@ export default function AppLayout({ children }) {
             `Event Update: ${eventTitle} venue has changed`,
             {
               ...toastConfig,
-              icon: "📍",
               style: {
                 background: "#1e3a8a",
                 color: "#bfdbfe",

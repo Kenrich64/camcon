@@ -35,7 +35,7 @@ const pageConfig = {
 
 export default function Header({ theme = "light", onToggleTheme }) {
   const pathname = usePathname();
-  const config = pageConfig[pathname] || { title: "Page", subtitle: "", icon: "📄" };
+  const config = pageConfig[pathname] || { title: "Page", subtitle: "", icon: "PAGE" };
   const [notifications, setNotifications] = useState([]);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const role = typeof window !== "undefined" ? localStorage.getItem("role") || "user" : "user";
